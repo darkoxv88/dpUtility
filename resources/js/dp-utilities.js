@@ -12,17 +12,26 @@
 */
 
 
+window.dpServices = {}
 
 window.dpTypes = null;
+window.dpServices.dpTypes = null;
+window.dpMath = null;
+window.dpServices.dpMath = null;
+
+window.dpSubject = null;
+
 window.dpColor = null;
 window.dpVector = null;
-window.dpSubject = null;
+window.dpMatrix = null;
+
 window.dpCookies = null;
+window.dpAJAX = null;
 
 
 
 // *********************** 
-// Types ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Global ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // *********************** 
 
 
@@ -100,7 +109,7 @@ window.dpCookies = null;
       return obj;
     },
 
-    getMatrix4x4 : function () {
+    matrix4x4 : function () {
       m = [];
       for(let i = 0; i < 4; i++) {
         m[i] = [];
@@ -114,14 +123,9 @@ window.dpCookies = null;
   }
 	
 	window.dpTypes = dpTypes;
+  window.dpServices.dpTypes = new dpTypes();
 
 } )( window );
-
-
-
-// *********************** 
-// Math ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// *********************** 
 
 
 
@@ -133,11 +137,7 @@ window.dpCookies = null;
 
   dpMath.prototype = {
 
-    dpTypes : { },
-
-    init : function () { 
-      this.dpTypes = new new dpTypes();
-    },
+    init : function () { },
 
     maxCap : function (value, cap) {
       if (typeof(value) !== 'number') { 
@@ -172,8 +172,81 @@ window.dpCookies = null;
   }
 	
 	window.dpMath = dpMath;
+  window.dpServices.dpMath = new dpMath();
 
 } )( window );
+
+
+
+// *********************** 
+// Util ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// *********************** 
+
+
+
+( function( window ) {
+  
+  function dpSubject(value) {
+    this.init(value);
+  }
+
+  dpSubject.prototype = {
+
+    value : null,
+    call : null,
+
+    init : function (value) { 
+      this.value = value;
+    },
+
+    subscribe : function (callback) { 
+      if (typeof(callback) !== "function") { 
+        console.error(`callback: ${callback} is not a function`);
+        return; 
+      }
+
+      this.call = callback;
+    },
+
+    unsubscribe : function () { 
+      this.call = null;
+    },
+
+    reset : function () {
+      this.value = null;
+      this.unsubscribe();
+    },
+
+    fireEvent : function () {
+      try {
+        if (typeof(this.call) !== "function") { return; }
+        this.call();
+      } catch(err) { console.error(err); }
+    },
+
+    next : function (value) {
+      this.value = value;
+      this.fireEvent();
+    },
+
+    getValue : function () {
+      return this.value;
+    }
+
+  }
+
+  window.dpSubject = dpSubject;
+
+} )( window );
+
+
+
+
+
+
+// *********************** 
+// Math ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// *********************** 
 
 
 
@@ -189,7 +262,7 @@ window.dpCookies = null;
     kelvinTable : { },
 
     init : function () { 
-      this.dpTypes = new new dpTypes();
+      this.dpTypes = new dpTypes();
       this.kelvinTable = this.getKelvinTable();
     },
 
@@ -386,7 +459,7 @@ window.dpCookies = null;
     dpTypes : { },
 
     init : function () { 
-      this.dpTypes = new new dpTypes();
+      this.dpTypes = new dpTypes();
     },
 
     add : function (v1, v2) {
@@ -444,7 +517,7 @@ window.dpCookies = null;
     dpTypes : { },
 
     init : function () { 
-      this.dpTypes = new new dpTypes();
+      this.dpTypes = new dpTypes();
     },
 
   }
@@ -454,63 +527,15 @@ window.dpCookies = null;
 } )( window );
 
 
+// *********************** 
+// Image ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// *********************** 
+
+
 
 // *********************** 
-// Other ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Generic ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // *********************** 
-
-
-
-( function( window ) {
-  
-  function dpSubject(value) {
-    this.init(value);
-  }
-
-  dpSubject.prototype = {
-
-    value : null,
-    call : null,
-
-    init : function (value) { 
-      this.value = value;
-    },
-
-    subscribe : function (callback) { 
-      if (typeof(callback) !== "function") { return; }
-
-      this.calls = callback;
-    },
-
-    unsubscribe : function () { 
-      this.calls = null;
-    },
-
-    reset : function () {
-      this.value = null;
-      this.unsubscribe();
-    },
-
-    fireEvents : function () {
-      try {
-        this.calls();
-      } catch(err) { console.error(err); }
-    },
-
-    next : function (value) {
-      this.value = value;
-      this.fireEvents();
-    },
-
-    getValue : function () {
-      return this.value;
-    }
-
-  }
-
-  window.dpSubject = dpSubject;
-
-} )( window );
 
 
 
@@ -552,10 +577,149 @@ window.dpCookies = null;
       let date = new Date();
       date.setTime(date.getTime() - 1000);
       document.cookie = cookieName + '=' + '' + ';' + 'expires=' + date.toUTCString() + ';path=/';
+    },
+
+    setObj : function () {
+
+    },
+
+    getObj : function () {
+
+    },
+
+    deleteObj : function () {
+
     }
     
   }
 
   window.dpCookies = dpCookies;
+
+} )( window );
+
+
+
+( function( window ) {
+  
+  function dpAJAX() {
+    this.init();
+  }
+
+  dpAJAX.prototype = {
+
+    progress : null,
+    error : null,
+
+    init : function () {
+      this.progress = new dpSubject({
+        loaded : 0,
+        total : 0,
+      });
+      this.error = new dpSubject(null);
+    },
+
+    subError : function (callback) {
+      this.error.subscribe(callback);
+    },
+
+    get: async function (url, header, callback) {
+      return new Promise((resolve, reject) => {
+        let xhr = new XMLHttpRequest();
+
+        xhr.open('GET', url);
+
+        if (typeof(header) === 'object') {
+          for(let item in header) {
+            xhr.setRequestHeader(item, header[item]);
+          }
+        }
+
+        xhr.send();
+
+        xhr.onload = () => {
+          if (xhr.status != 200) { 
+            console.error(`Error ${xhr.status}: ${xhr.statusText}`);
+            this.error.next(xhr.status, xhr.statusText);
+            reject(xhr.status, xhr.statusText);
+          } else {
+            const respHeaders = xhr.getAllResponseHeaders().split('\r\n').reduce((result, current) => {
+              let [name, value] = current.split(': ');
+              result[name] = value;
+              return result;
+            }, {});
+
+            if (typeof(callback) === 'function') { 
+              callback(xhr.response, respHeaders); 
+            }
+
+            resolve(xhr.response, respHeaders);
+          }
+        };
+
+        xhr.onprogress = (event) => {
+          if (event.lengthComputable) {
+            this.progress.next({loaded : event.loaded, total : event.total});
+          } else {
+            this.progress.next(event.loaded);
+          }
+        };
+        
+        xhr.onerror = () => {
+          console.error("Request failed");
+        };
+      });
+    },
+
+    post: async function (url, body, header, callback) {
+      return new Promise((resolve, reject) => {
+        let xhr = new XMLHttpRequest();
+
+        xhr.open('POST', url);
+
+        if (typeof(header) === 'object') {
+          for(let item in header) {
+            xhr.setRequestHeader(item, header[item]);
+          }
+        }
+
+        xhr.send(body);
+
+        xhr.onload = () => {
+          if (xhr.status != 200) { 
+            console.error(`Error ${xhr.status}: ${xhr.statusText}`);
+            this.error.next(xhr.status, xhr.statusText);
+            reject(xhr.status, xhr.statusText);
+          } else {
+            const respHeaders = xhr.getAllResponseHeaders().split('\r\n').reduce((result, current) => {
+              let [name, value] = current.split(': ');
+              result[name] = value;
+              return result;
+            }, {});
+
+            if (typeof(callback) === 'function') { 
+              callback(xhr.response, respHeaders); 
+            }
+
+            resolve(xhr.response, respHeaders);
+          }
+        };
+
+        xhr.onprogress = (event) => {
+          if (event.lengthComputable) {
+            this.progress.next({loaded : event.loaded, total : event.total});
+          } else {
+            this.progress.next(event.loaded);
+          }
+        };
+        
+        xhr.onerror = () => {
+          console.error("Request failed");
+        };
+      });
+    },
+    
+  }
+
+  window.dpAJAX = dpAJAX;
 
 } )( window );
