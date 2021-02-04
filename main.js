@@ -13,7 +13,11 @@
 
 let index = {
   init : function () {
-    console.log('test');
+    let c = new dpAJAX();
+
+    c.get('test/test.html').then((data) => {
+      console.log(data);
+    });
   },
 };
 
