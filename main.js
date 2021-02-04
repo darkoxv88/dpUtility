@@ -13,7 +13,7 @@
 
 let index = {
   init : function () {
-    
+    console.log('test');
   },
 };
 
