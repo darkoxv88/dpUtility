@@ -549,12 +549,18 @@ window.dpAJAX = null;
 
     init : function () { },
 
-    set : function (cookieName, cookieValue, cookieDurationDays = 7) {
+    set : function (cookieName, cookieValue, cookieDurationDays = 7, type = 'day') {
       if( typeof cookieDurationDays != 'number' ) { cookieDurationDays = 7; }
       if( typeof cookieDurationDays <= 0 ) { cookieDurationDays = 7; }
+
+      let d = 24;
+      let h = 60;
+
+      if (type = 'hour') { d = 1; }
+      if (type = 'minute') { d = 1; h = 1; }
   
       let date = new Date();
-      date.setTime(date.getTime() + (cookieDurationDays * 24 * 60 * 60 * 1000));
+      date.setTime(date.getTime() + (cookieDurationDays * d * h * 60 * 1000));
       document.cookie = cookieName + '=' + cookieValue + ';' + 'expires=' + date.toUTCString() + ';path=/';
     },
 
@@ -579,16 +585,32 @@ window.dpAJAX = null;
       document.cookie = cookieName + '=' + '' + ';' + 'expires=' + date.toUTCString() + ';path=/';
     },
 
-    setObj : function () {
+    setObj : function (obj, cookieDurationDays = 7, type = 'day') {
+      if (typeof(obj) !== 'object') { return false; }
 
+      for(let item in obj) {
+        this.set(item, JSON.stringify(obj[item]), cookieDurationDays = 7, type = 'day');
+      }
     },
 
-    getObj : function () {
+    getObj : function (obj) {
+      if (typeof(obj) !== 'object') { return false; }
 
+      let output = {}
+
+      for(let item in obj) {
+        output[item] = this.get(item);
+      }
+
+      return output;
     },
 
-    deleteObj : function () {
+    deleteObj : function (obj) {
+      if (typeof(obj) !== 'object') { return false; }
 
+      for(let item in obj) {
+        this.delete(item);
+      }
     }
     
   }
