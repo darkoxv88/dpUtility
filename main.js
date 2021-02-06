@@ -12,11 +12,18 @@
 */
 
 let index = {
+  test : null,
+
   init : function () {
     let c = new dpAJAX();
 
     c.get('test/test.html').then((data) => {
       console.log(data);
+    });
+
+    this.test = new canvas2Dctx();
+    this.test.onLoad(() => {
+      console.log(this.test.getImageUrl());
     });
   },
 };
