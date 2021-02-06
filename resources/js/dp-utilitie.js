@@ -24,7 +24,7 @@ window.dpSubject = null;
 window.dpColor = null;
 window.dpVector = null;
 window.dpMatrix = null;
-window.canvas2Dctx = null;
+window.dpCanvas2Dctx = null;
 
 window.dpImageProcessing
 
@@ -538,11 +538,11 @@ window.dpAJAX = null;
 
 ( function( window ) {
   
-  function canvas2Dctx() {
+  function dpCanvas2Dctx() {
     this.init();
   }
 
-  canvas2Dctx.prototype = {
+  dpCanvas2Dctx.prototype = {
 
     onLoadEvent : null,
     file : null,
@@ -658,7 +658,7 @@ window.dpAJAX = null;
 
   }
 	
-	window.canvas2Dctx = canvas2Dctx;
+	window.dpCanvas2Dctx = dpCanvas2Dctx;
 
 } )( window );
 
@@ -680,10 +680,12 @@ window.dpAJAX = null;
 
     dpTypes : null,
     dpColor : null,
+    dpCtx : null,
 
     init : function () { 
       this.dpTypes = new dpTypes();
       this.dpColor = new dpColor();
+      this.dpCtx = new dpCanvas2Dctx();
     },
 
   }
