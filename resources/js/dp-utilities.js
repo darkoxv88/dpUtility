@@ -24,6 +24,9 @@ window.dpSubject = null;
 window.dpColor = null;
 window.dpVector = null;
 window.dpMatrix = null;
+window.canvas2Dctx = null;
+
+window.dpImageProcessing
 
 window.dpCookies = null;
 window.dpAJAX = null;
@@ -186,8 +189,8 @@ window.dpAJAX = null;
 
 ( function( window ) {
   
-  function dpSubject(value) {
-    this.init(value);
+  function dpSubject(value, sub = null) {
+    this.init(value, sub);
   }
 
   dpSubject.prototype = {
@@ -195,11 +198,13 @@ window.dpAJAX = null;
     value : null,
     call : null,
 
-    init : function (value) { 
+    init : function (value, sub) {
       this.value = value;
+      this.subscribe(sub);
     },
 
     subscribe : function (callback) { 
+      if (!callback) { return; }
       if (typeof(callback) !== "function") { 
         console.error(`callback: ${callback} is not a function`);
         return; 
@@ -220,7 +225,7 @@ window.dpAJAX = null;
     fireEvent : function () {
       try {
         if (typeof(this.call) !== "function") { return; }
-        this.call();
+        this.call(this.value);
       } catch(err) { console.error(err); }
     },
 
@@ -241,9 +246,6 @@ window.dpAJAX = null;
 
 
 
-
-
-
 // *********************** 
 // Math ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // *********************** 
@@ -258,7 +260,7 @@ window.dpAJAX = null;
 
   dpColor.prototype = {
 
-    dpTypes : { },
+    dpTypes : null,
     kelvinTable : { },
 
     init : function () { 
@@ -456,7 +458,7 @@ window.dpAJAX = null;
 
   dpVector.prototype = {
 
-    dpTypes : { },
+    dpTypes : null,
 
     init : function () { 
       this.dpTypes = new dpTypes();
@@ -527,9 +529,168 @@ window.dpAJAX = null;
 } )( window );
 
 
+
 // *********************** 
-// Image ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Canvas ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // *********************** 
+
+
+
+( function( window ) {
+  
+  function canvas2Dctx() {
+    this.init();
+  }
+
+  canvas2Dctx.prototype = {
+
+    onLoadEvent : null,
+    file : null,
+    img: null,
+    imgData : {
+      iName : '',
+      iSize : 0,
+      iType : '',
+      src : '',
+      width : 0,
+      height : 0,
+    },
+    ctxOrg: null,
+    ctxActive: null,
+
+    init : function () { 
+      this.onLoadEvent = new dpSubject();
+    },
+
+    onLoad: function (callback) {
+      this.onLoadEvent.subscribe(callback);
+    },
+
+    loadImage : function (e, type='event') {
+      if (!e) { return; }
+
+      if (type === 'event') { 
+        files = e.target.files; 
+      } else if(type === 'file') {
+        files = e;
+      } else { return; }
+  
+      if (FileReader && files && files.length) {
+        this.imgData.iName = files[0].name;
+        this.imgData.iSize = files[0].size;
+        this.imgData.iType = files[0].type;
+
+        this.file = files[0];
+
+        let fr = new FileReader();
+        fr.onload = () => this.createLoadedImage(fr.result);
+        fr.readAsDataURL(files[0]);
+      } else {
+        console.error('There was an unknown error. Check if FileReader is supported');
+      }
+    },
+
+    createLoadedImage : function (src) {
+      img = document.createElement('img');
+      img.onload = () => this.createCanvasCtxFromImage(img);
+      img.src = src;
+      this.imgData.src = src;
+      this.img = img;
+    },
+
+    createCanvasCtxFromImage : function (img) {
+      try {
+        let canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        this.imgData.width = img.width;
+        this.imgData.height = img.height;
+        let ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        this.ctxOrg = ctx;
+        this.ctxActive = this.duplicateCtxOrg();
+      } catch(error) {
+        console.error(error);
+        return;
+      }
+
+      this.onLoadEvent.next(null);
+    },
+
+    generate2dCtx : function (w = this.imgData.width, h = this.imgData.height) {
+      var newCanvas = document.createElement('canvas');
+      newCanvas.width = w;
+      newCanvas.height = h;
+      return  newCanvas.getContext('2d');
+    },
+
+    duplicateCtxOrg : function () {
+      var context = this.generate2dCtx(this.ctxOrg.canvas.width, this.ctxOrg.canvas.height)
+      context.drawImage(this.ctxOrg.canvas, 0, 0);
+      return context;
+    },
+
+    duplicateCtxActive : function () {
+      var context = this.generate2dCtx(this.ctxActive.canvas.width, this.ctxActive.canvas.height)
+      context.drawImage(this.ctxActive.canvas, 0, 0);
+      return context;
+    },
+
+    getImageUrl : function (mimeType = 'image/png') {
+      return this.ctxActive.canvas.toDataURL(mimeType);
+    },
+
+    reset : function () {
+      this.ctxActive = this.duplicateCtxOrg();
+    },
+
+    aWidth : function () {
+      return this.ctxActive.canvas.width;
+    },
+
+    aHeight : function () {
+      return this.ctxActive.canvas.height;
+    },
+
+    getPixelData : function () {
+      return this.ctxActive.getImageData(0, 0, this.aWidth(), this.aHeight());
+    },
+
+  }
+	
+	window.canvas2Dctx = canvas2Dctx;
+
+} )( window );
+
+
+
+// *********************** 
+// Image processing ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// *********************** 
+
+
+
+( function( window ) {
+  
+  function dpImageProcessing() {
+    this.init();
+  }
+
+  dpImageProcessing.prototype = {
+
+    dpTypes : null,
+    dpColor : null,
+
+    init : function () { 
+      this.dpTypes = new dpTypes();
+      this.dpColor = new dpColor();
+    },
+
+  }
+	
+	window.dpImageProcessing = dpImageProcessing;
+
+} )( window );
 
 
 
