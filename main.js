@@ -21,7 +21,7 @@ let index = {
       console.log(data);
     });
 
-    this.test = new canvas2Dctx();
+    this.test = new dpCanvas2Dctx();
     this.test.onLoad(() => {
       console.log(this.test.getImageUrl());
     });
