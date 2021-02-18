@@ -11,7 +11,13 @@
   Software authors provide no warranty with the software and are not liable for anything.
 */
 
-"use strict";
+
+window.dpServices = {}
+
+window.dpTypes = null;
+window.dpServices.dpTypes = null;
+window.dpMath = null;
+window.dpServices.dpMath = null;
 
 window.dpSubject = null;
 
@@ -33,107 +39,145 @@ window.dpAJAX = null;
 
 
 
-class dpTypes
-{
-  static byte(val) { 
-    if (!val) { return 0 ; }
-
-    try {
-      val = parseInt(val);
-    } catch(error) {
-      console.error(`Value: ${val} cant be parsed to int.`, error);
-      return;
-    }
-
-    if (val > 255) { return 255; }
-    if (val < 0) { return 0; }
-
-    return val;
+( function( window ) {
+  
+  function dpTypes() {
+    this.init();
   }
 
-  static color(r, g, b, a = 255) {
-    var obj = {
-      r : this.byte(r),
-      g : this.byte(g),
-      b : this.byte(b),
-      a : this.byte(a)
-    }
+  dpTypes.prototype = {
 
-    return obj;
-  }
+    init : function () { },
 
-  static vector3D (x, y, z, w = 1) {
-    if (typeof(x) !== 'number') { x = 0; }
-    if (typeof(y) !== 'number') { y = 0; }
-    if (typeof(z) !== 'number') { z = 0; }
-    if (typeof(w) !== 'number') { w = 0; }
+    byte : function (val) { 
+      if (!val) { return 0 ; }
 
-    var obj = {
-      x : x,
-      y : y,
-      z : z,
-      w : w
-    }
-
-    return obj;
-  }
-
-  static triangle (v1, v2, v3, color) {
-    let obj = {
-      tri : [v1, v2, v3],
-      color : color,
-    }
-
-    return obj;
-  }
-
-  static matrix4x4() {
-    m = [];
-    for(let i = 0; i < 4; i++) {
-      m[i] = [];
-      for(let j = 0; j < 4; j++) {
-        m[i][j] = 0;
+      try {
+        val = parseInt(val);
+      } catch(error) {
+        console.error(`Value: ${val} cant be parsed to int.`, error);
+        return;
       }
+  
+      if (val > 255) { return 255; }
+      if (val < 0) { return 0; }
+  
+      return val;
+    },
+
+    color : function (r, g, b, a = 255) {
+      var obj = {
+        r : this.byte(r),
+        g : this.byte(g),
+        b : this.byte(b),
+        a : this.byte(a)
+      }
+
+      return obj;
+    },
+
+    vector3D : function (x, y, z, w = 1) {
+      if (typeof(x) !== 'number') { x = 0; }
+      if (typeof(y) !== 'number') { y = 0; }
+      if (typeof(z) !== 'number') { z = 0; }
+      if (typeof(w) !== 'number') { w = 0; }
+
+      var obj = {
+        x : x,
+        y : y,
+        z : z,
+        w : w
+      }
+
+      return obj;
+    },
+
+    _verifyTypeVector3D : function (vec) {
+      if (typeof(vec) !== 'object') { return false; }
+
+      if (typeof(vec.x) !== 'number')  { return false; }
+      if (typeof(vec.y) !== 'number') { return false; }
+      if (typeof(vec.z) !== 'number') { return false; }
+      if (typeof(vec.w) !== 'number') { return false; }
+
+      return true;
+    },
+
+    triangle : function (v1, v2, v3, color) {
+      let obj = {
+        tri : [v1, v2, v3],
+        color : color,
+      }
+
+      return obj;
+    },
+
+    matrix4x4 : function () {
+      m = [];
+      for(let i = 0; i < 4; i++) {
+        m[i] = [];
+        for(let j = 0; j < 4; j++) {
+          m[i][j] = 0;
+        }
+      }
+      return m;
     }
-    return m;
+    
   }
-}
+	
+	window.dpTypes = dpTypes;
+  window.dpServices.dpTypes = new dpTypes();
+
+} )( window );
 
 
 
-class dpMath {
-
-  static maxCap(value, cap) {
-    if (typeof(value) !== 'number') { 
-      console.error(`value: ${value} is not a number`);
-      return 0;
-    }
-    if (typeof(cap) !== 'number') { 
-      console.error(`cap: ${cap} is not a number`);
-      return 0;
-    }
-
-    if (value > cap) { value = cap; }
-
-    return value;
+( function( window ) {
+  
+  function dpMath() {
+    this.init();
   }
 
-  static minCap(value, cap) {
-    if (typeof(value) !== 'number') { 
-      console.error(`value: ${value} is not a number`);
-      return 0;
-    }
-    if (typeof(cap) !== 'number') { 
-      console.error(`cap: ${cap} is not a number`);
-      return 0;
-    }
+  dpMath.prototype = {
 
-    if (value < cap) { value = cap; }
+    init : function () { },
 
-    return value;
+    maxCap : function (value, cap) {
+      if (typeof(value) !== 'number') { 
+        console.error(`value: ${value} is not a number`);
+        return 0;
+      }
+      if (typeof(cap) !== 'number') { 
+        console.error(`cap: ${cap} is not a number`);
+        return 0;
+      }
+
+      if (value > cap) { value = cap; }
+
+      return value;
+    },
+
+    minCap : function (value, cap) {
+      if (typeof(value) !== 'number') { 
+        console.error(`value: ${value} is not a number`);
+        return 0;
+      }
+      if (typeof(cap) !== 'number') { 
+        console.error(`cap: ${cap} is not a number`);
+        return 0;
+      }
+
+      if (value < cap) { value = cap; }
+
+      return value;
+    },
+
   }
+	
+	window.dpMath = dpMath;
+  window.dpServices.dpMath = new dpMath();
 
-}
+} )( window );
 
 
 
@@ -216,9 +260,11 @@ class dpMath {
 
   dpColor.prototype = {
 
+    dpTypes : null,
     kelvinTable : { },
 
     init : function () { 
+      this.dpTypes = new dpTypes();
       this.kelvinTable = this.getKelvinTable();
     },
 
@@ -291,9 +337,9 @@ class dpMath {
 
     rgbToHSL : function (cR, cG, cB) {
 
-      let r = dpTypes.byte(cR) / 255;
-      let g = dpTypes.byte(cG) / 255;
-      let b = dpTypes.byte(cB) / 255;
+      let r = this.dpTypes.byte(cR) / 255;
+      let g = this.dpTypes.byte(cG) / 255;
+      let b = this.dpTypes.byte(cB) / 255;
 
       let max = Math.max(r, g, b); 
       let min = Math.min(r, g, b);
@@ -359,7 +405,7 @@ class dpMath {
         b = 255 * Hue_2_RGB( val1, val2, h - ( 1 / 3 ) );
       }
 
-      return dpTypes.color(r, g, b);
+      return this.dpTypes.color(r, g, b);
     },
 
     colorTemperatureToRgb : function (value) {
@@ -412,22 +458,26 @@ class dpMath {
 
   dpVector.prototype = {
 
-    init : function () { },
+    dpTypes : null,
+
+    init : function () { 
+      this.dpTypes = new dpTypes();
+    },
 
     add : function (v1, v2) {
-      return dpTypes.vector3D(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z);
+      return this.dpTypes.vector3D(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z);
     },
 
     sub : function (v1, v2) {
-      return dpTypes.vector3D(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z);
+      return this.dpTypes.vector3D(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z);
     },
 
     mul : function (v1, v2) {
-      return dpTypes.vector3D(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z);
+      return this.dpTypes.vector3D(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z);
     },
 
     div : function (v1, v2) {
-      return dpTypes.vector3D(v1.x/v2.x, v1.y/v2.y, v1.z/v2.z);
+      return this.dpTypes.vector3D(v1.x/v2.x, v1.y/v2.y, v1.z/v2.z);
     },
 
     dotProduct : function (v1, v2) {
@@ -440,11 +490,11 @@ class dpMath {
 
     normalise : function (v) {
       const l = this.length(v)
-      return dpTypes.vector3D(v.x / l, v.y / l, v.z / l);
+      return this.dpTypes.vector3D(v.x / l, v.y / l, v.z / l);
     },
 
     crossProduct : function (v1, v2) {
-      let v = dpTypes.vector3D(0, 0, 0);
+      let v = this.dpTypes.vector3D(0, 0, 0);
       v.x = v1.y*v2.z - v1.z*v2.y;
       v.y = v1.z*v2.x - v1.x*v2.z;
       v.z = v1.x*v2.y - v1.y*v2.x;
@@ -466,7 +516,11 @@ class dpMath {
 
   dpMatrix.prototype = {
 
-    init : function () { },
+    dpTypes : { },
+
+    init : function () { 
+      this.dpTypes = new dpTypes();
+    },
 
   }
 	
@@ -515,8 +569,6 @@ class dpMath {
     loadImage : function (e, type='event') {
       if (!e) { return; }
 
-      let files = null;
-
       if (type === 'event') { 
         files = e.target.files; 
       } else if(type === 'file') {
@@ -539,7 +591,7 @@ class dpMath {
     },
 
     createLoadedImage : function (src) {
-      let img = document.createElement('img');
+      img = document.createElement('img');
       img.onload = () => this.createCanvasCtxFromImage(img);
       img.src = src;
       this.imgData.src = src;
@@ -566,20 +618,20 @@ class dpMath {
     },
 
     generate2dCtx : function (w = this.imgData.width, h = this.imgData.height) {
-      let newCanvas = document.createElement('canvas');
+      var newCanvas = document.createElement('canvas');
       newCanvas.width = w;
       newCanvas.height = h;
       return  newCanvas.getContext('2d');
     },
 
     duplicateCtxOrg : function () {
-      let context = this.generate2dCtx(this.ctxOrg.canvas.width, this.ctxOrg.canvas.height)
+      var context = this.generate2dCtx(this.ctxOrg.canvas.width, this.ctxOrg.canvas.height)
       context.drawImage(this.ctxOrg.canvas, 0, 0);
       return context;
     },
 
     duplicateCtxActive : function () {
-      let context = this.generate2dCtx(this.ctxActive.canvas.width, this.ctxActive.canvas.height)
+      var context = this.generate2dCtx(this.ctxActive.canvas.width, this.ctxActive.canvas.height)
       context.drawImage(this.ctxActive.canvas, 0, 0);
       return context;
     },
@@ -626,16 +678,18 @@ class dpMath {
 
   dpImageProcessing.prototype = {
 
+    dpTypes : null,
     dpColor : null,
     dpCtx : null,
 
     init : function () { 
+      this.dpTypes = new dpTypes();
       this.dpColor = new dpColor();
       this.dpCtx = new dpCanvas2Dctx();
     },
 
   }
-
+	
 	window.dpImageProcessing = dpImageProcessing;
 
 } )( window );
