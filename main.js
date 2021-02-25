@@ -21,9 +21,13 @@ let index = {
       console.log(data);
     });
 
-    this.test = new dpCanvas2Dctx();
-    this.test.onLoad(() => {
-      console.log(this.test.getImageUrl());
+    this.test = new dpImageProcessing(async () => {
+      let img = document.getElementById("test-img");
+      await this.test.asyncLightness(50);
+      await this.test.flipImage(true, false);
+      await this.test.rotateImage(true);
+      await this.test.rotateImage(true);
+      img.src = this.test.getImg();
     });
   },
 };
