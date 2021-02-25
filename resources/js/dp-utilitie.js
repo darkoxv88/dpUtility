@@ -205,7 +205,7 @@ class dpMatrix {
 
     subscribe : function (callback) { 
       if (!callback) { return; }
-      if (typeof(callback) !== "function") { 
+      if (typeof(callback) !== 'function') { 
         console.error(`callback: ${callback} is not a function`);
         return; 
       }
@@ -224,7 +224,7 @@ class dpMatrix {
 
     fireEvent : function () {
       try {
-        if (typeof(this.call) !== "function") { return; }
+        if (typeof(this.call) !== 'function') { return; }
         this.call(this.value);
       } catch(err) { console.error(err); }
     },
@@ -699,11 +699,11 @@ class dpMatrix {
       this.error.subscribe(callback);
     },
 
-    get: async function (url, header, callback) {
+    get: async function (url, header, callback, type='GET') {
       return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
 
-        xhr.open('GET', url);
+        xhr.open(type, url);
 
         if (typeof(header) === 'object') {
           for(let item in header) {
@@ -742,16 +742,16 @@ class dpMatrix {
         };
         
         xhr.onerror = () => {
-          console.error("Request failed");
+          console.error('Request failed');
         };
       });
     },
 
-    post: async function (url, body, header, callback) {
+    post: async function (url, body, header, callback, type='POST') {
       return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
 
-        xhr.open('POST', url);
+        xhr.open(type, url);
 
         if (typeof(header) === 'object') {
           for(let item in header) {
@@ -790,7 +790,7 @@ class dpMatrix {
         };
         
         xhr.onerror = () => {
-          console.error("Request failed");
+          console.error('Request failed');
         };
       });
     },
