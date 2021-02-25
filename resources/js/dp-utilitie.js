@@ -16,15 +16,12 @@
 window.dpSubject = null;
 
 window.dpColor = null;
-window.dpVector = null;
-window.dpMatrix = null;
 window.dpCanvas2Dctx = null;
-
-window.dpImageProcessing
 
 window.dpCookies = null;
 window.dpAJAX = null;
 
+window.dpImageProcessing = null;
 
 
 // *********************** 
@@ -78,10 +75,9 @@ class dpTypes
     return obj;
   }
 
-  static triangle (v1, v2, v3, color) {
+  static triangle (v1, v2, v3) {
     let obj = {
       tri : [v1, v2, v3],
-      color : color,
     }
 
     return obj;
@@ -132,6 +128,54 @@ class dpMath {
 
     return value;
   }
+
+}
+
+
+
+class dpVector {
+  static add(v1, v2) {
+    return dpTypes.vector3D(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z);
+  }
+
+  static sub(v1, v2) {
+    return dpTypes.vector3D(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z);
+  }
+
+  static mul(v1, v2) {
+    return dpTypes.vector3D(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z);
+  }
+
+  static div(v1, v2) {
+    return dpTypes.vector3D(v1.x/v2.x, v1.y/v2.y, v1.z/v2.z);
+  }
+
+  static dotProduct(v1, v2) {
+    return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
+  }
+
+  static length(v) {
+    return Math.sqrt(this.dotProduct(v, v));
+  }
+
+  static normalise(v) {
+    const l = this.length(v)
+    return dpTypes.vector3D(v.x / l, v.y / l, v.z / l);
+  }
+
+  static crossProduct(v1, v2) {
+    let v = dpTypes.vector3D(0, 0, 0);
+    v.x = v1.y*v2.z - v1.z*v2.y;
+    v.y = v1.z*v2.x - v1.x*v2.z;
+    v.z = v1.x*v2.y - v1.y*v2.x;
+    return v;
+  }
+
+}
+
+
+
+class dpMatrix {
 
 }
 
@@ -393,84 +437,12 @@ class dpMath {
         b = (138.5177312231 * Math.log(value - 10) - 305.0447927307).toFixed(0);
       }
 
-      return this.dpTypes.color(r, g, b);
+      return dpTypes.color(r, g, b);
     }
 
   }
 	
 	window.dpColor = dpColor;
-
-} )( window );
-
-
-
-( function( window ) {
-  
-  function dpVector() {
-    this.init();
-  }
-
-  dpVector.prototype = {
-
-    init : function () { },
-
-    add : function (v1, v2) {
-      return dpTypes.vector3D(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z);
-    },
-
-    sub : function (v1, v2) {
-      return dpTypes.vector3D(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z);
-    },
-
-    mul : function (v1, v2) {
-      return dpTypes.vector3D(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z);
-    },
-
-    div : function (v1, v2) {
-      return dpTypes.vector3D(v1.x/v2.x, v1.y/v2.y, v1.z/v2.z);
-    },
-
-    dotProduct : function (v1, v2) {
-      return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
-    },
-
-    length : function (v) {
-      return Math.sqrt(this.dotProduct(v, v));
-    },
-
-    normalise : function (v) {
-      const l = this.length(v)
-      return dpTypes.vector3D(v.x / l, v.y / l, v.z / l);
-    },
-
-    crossProduct : function (v1, v2) {
-      let v = dpTypes.vector3D(0, 0, 0);
-      v.x = v1.y*v2.z - v1.z*v2.y;
-      v.y = v1.z*v2.x - v1.x*v2.z;
-      v.z = v1.x*v2.y - v1.y*v2.x;
-      return v;
-    },
-
-  }
-	
-	window.dpVector = dpVector;
-
-} )( window );
-
-
-( function( window ) {
-  
-  function dpMatrix() {
-    this.init();
-  }
-
-  dpMatrix.prototype = {
-
-    init : function () { },
-
-  }
-	
-	window.dpMatrix = dpMatrix;
 
 } )( window );
 
@@ -592,51 +564,25 @@ class dpMath {
       this.ctxActive = this.duplicateCtxOrg();
     },
 
-    aWidth : function () {
+    getWidth : function () {
       return this.ctxActive.canvas.width;
     },
 
-    aHeight : function () {
+    getHeight : function () {
       return this.ctxActive.canvas.height;
     },
 
+    getCanvas : function () {
+      return this.ctxActive.canvas;
+    },
+
     getPixelData : function () {
-      return this.ctxActive.getImageData(0, 0, this.aWidth(), this.aHeight());
+      return this.ctxActive.getImageData(0, 0, this.getWidth(), this.getHeight());
     },
 
   }
 	
 	window.dpCanvas2Dctx = dpCanvas2Dctx;
-
-} )( window );
-
-
-
-// *********************** 
-// Image processing ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// *********************** 
-
-
-
-( function( window ) {
-  
-  function dpImageProcessing() {
-    this.init();
-  }
-
-  dpImageProcessing.prototype = {
-
-    dpColor : null,
-    dpCtx : null,
-
-    init : function () { 
-      this.dpColor = new dpColor();
-      this.dpCtx = new dpCanvas2Dctx();
-    },
-
-  }
-
-	window.dpImageProcessing = dpImageProcessing;
 
 } )( window );
 
@@ -852,5 +798,461 @@ class dpMath {
   }
 
   window.dpAJAX = dpAJAX;
+
+} )( window );
+
+
+
+// *********************** 
+// Image processing ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// *********************** 
+
+
+
+( function( window ) {
+  
+  function dpImageProcessing(callback = null) {
+    this.init(callback);
+  }
+
+  dpImageProcessing.prototype = {
+
+    dpColor : null,
+    dpCtx : null,
+
+    init : function (callback) { 
+      this.dpColor = new dpColor();
+      this.dpCtx = new dpCanvas2Dctx();
+      if (typeof callback == 'function') {
+        this.onLoad(callback);
+      }
+    },
+
+    onLoad : function (callback) { 
+      this.dpCtx.onLoad(callback);
+    },
+
+    loadImage : function (e, type='event') {
+      this.dpCtx.loadImage(e, type);
+    },
+
+    getImg : function () {
+      return this.dpCtx.getImageUrl();
+    },
+
+    reset : function () {
+      this.dpCtx.reset();
+    },
+
+
+
+    flipImage : async function (flipH, flipV) {
+      var scaleH = flipH ? -1 : 1;
+      var scaleV = flipV ? -1 : 1;
+
+      this.dpCtx.ctxActive.save();
+
+      if(flipH) { this.dpCtx.ctxActive.translate(this.dpCtx.getWidth(), 0); }
+      if(flipV) { this.dpCtx.ctxActive.translate(0, this.dpCtx.getHeight()); } 
+
+      this.dpCtx.ctxActive.scale(scaleH, scaleV);
+      this.dpCtx.ctxActive.drawImage(this.dpCtx.getCanvas(), 0, 0);
+      this.dpCtx.ctxActive.setTransform(1,0,0,1,0,0);
+      this.dpCtx.ctxActive.restore();
+
+      return await new Promise(resolve => { resolve(true); });
+    },
+
+    rotateImage : async function (clockwise) {
+      let bmp = await createImageBitmap(this.dpCtx.getPixelData());
+
+      const degrees = clockwise == true ? 90 : -90;
+      const iw = this.dpCtx.getWidth();
+      const ih = this.dpCtx.getHeight();
+
+      this.dpCtx.ctxActive.canvas.width = ih;
+      this.dpCtx.ctxActive.canvas.height = iw;
+
+      if(clockwise) {
+        this.dpCtx.ctxActive.translate(ih, 0);
+      } else {
+        this.dpCtx.ctxActive.translate(0, iw);
+      }
+
+      this.dpCtx.ctxActive.rotate(degrees*Math.PI/180);
+      this.dpCtx.ctxActive.drawImage(bmp, 0 , 0);
+      this.dpCtx.ctxActive.setTransform(1,0,0,1,0,0);
+
+      return await new Promise(resolve => { resolve(true); });
+    },
+
+
+
+    colorFilter : function (type) {
+      if(this.state.colorFilter) { return; }
+
+      let imgData = this.dpCtx.getPixelData();
+      let data = imgData.data;
+
+      for(var i = 0; i < data.length; i += 4) {
+        if(type === 'red') {
+          data[i];
+          data[i + 1] = 0;
+          data[i + 2] = 0;
+        }
+        if(type === 'green') {
+          data[i] = 0;
+          data[i + 1];
+          data[i + 2] = 0;
+        }
+        if(type === 'blue') {
+          data[i] = 0;
+          data[i + 1] = 0;
+          data[i + 2];
+        }
+      }
+      
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncColorFilter : async function (type) {
+      let promise = new Promise(resolve => {
+        const res = this.colorFilter(type);
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+    invert : function () {
+      let imgData = this.dpCtx.getPixelData();
+      let data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = 255 - data[i];  
+        data[i + 1] = 255 - data[i + 1];
+        data[i + 2] = 255 - data[i + 2];
+      }
+      
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncInvert : async function () {
+      let promise = new Promise(resolve => {
+        const res = this.invert();
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+    grayscale : function (blackPass=0, whitePass=255) {
+      let imgData = this.dpCtx.getPixelData();
+      let data = imgData.data;
+
+      for (var i = 0; i < data.length; i += 4) {
+        var avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+
+        if(avg < blackPass) { avg = 0; }
+        else if(avg > whitePass) { avg = 255; }
+
+        data[i] = avg;
+        data[i + 1] = avg;
+        data[i + 2] = avg;
+      }
+
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncGrayscale : async function (blackPass=0, whitePass=255) {
+      let promise = new Promise(resolve => {
+        const res = this.grayscale(blackPass, whitePass);
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+    sepia : function () {
+      let imgData = this.dpCtx.getPixelData();
+      let data = imgData.data;
+
+      for (var i = 0; i < data.length; i += 4) {
+        let red = data[i], green = data[i + 1], blue = data[i + 2];
+    
+        data[i] = dpTypes.byte(0.393 * red + 0.769 * green + 0.189 * blue);
+        data[i + 1] = dpTypes.byte(0.349 * red + 0.686 * green + 0.168 * blue);
+        data[i + 2] = dpTypes.byte(0.272 * red + 0.534 * green + 0.131 * blue);
+      }
+
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncSepia : async function () {
+      let promise = new Promise(resolve => {
+        const res = this.sepia();
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+    gamma : function (value) {
+      try {
+        value = parseFloat(parseFloat(value).toFixed(4));
+      } catch(error) {
+        console.error(`Value: ${value} cant be parsed to float.`, error)
+        return;
+      }
+
+      if(value < 0) { value = 0; }
+      if(value > 100) { value = 100.0; }
+
+      let gammaCorrection = 1 / value;
+
+      let imgData = this.dpCtx.getPixelData();
+      let data = imgData.data;
+
+      for (var i = 0; i < data.length; i += 4) {
+        data[i] = dpTypes.byte(255 * Math.pow((data[i] / 255), gammaCorrection));
+        data[i+1] = dpTypes.byte(255 * Math.pow((data[i+1] / 255), gammaCorrection));
+        data[i+2] = dpTypes.byte(255 * Math.pow((data[i+2] / 255), gammaCorrection));
+      }
+
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncGamma : async function (value) {
+      let promise = new Promise(resolve => {
+        const res = this.gamma(value);
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+    transparency : function (value) {
+      try {
+        value = parseFloat(value);
+      } catch(error) {
+        console.error(`Value: ${value} cant be parsed to float.`, error)
+        return;
+      }
+
+      if (value < 0) { value = 0; }
+      if (value > 100) { value = 100; }
+
+      value = value / 100;
+
+      let imgData = this.dpCtx.getPixelData();
+      let data = imgData.data;
+
+      for(var i = 0; i < data.length; i += 4) {
+        data[i+3] = dpTypes.byte(data[i+3] * value);
+      }
+
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncTransparency : async function (value) {
+      let promise = new Promise(resolve => {
+        const res = this.transparency(value);
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+    temperature : function (value) {
+      try {
+        value = parseInt(value);
+      } catch(error) {
+        console.error(`Value: ${value} cant be parsed to int.`, error)
+        return;
+      }
+
+      if(value <= 0) { return false; }
+
+      let color = this.dpColor.kelvinTable[value];
+
+      if(!color) { 
+        let gen = this.dpColor.colorTemperatureToRgb(value);
+        color = [];
+        color[0] = gen.r;
+        color[1] = gen.g;
+        color[2] = gen.b;
+      }
+
+      let r = color[0] / 255;
+      let g = color[1] / 255;
+      let b = color[2] / 255;
+
+      let imgData = this.dpCtx.getPixelData();
+      let data = imgData.data;
+
+      for(var i = 0; i < data.length; i += 4) {
+        data[i] = dpTypes.byte(data[i] * r);
+        data[i+1] = dpTypes.byte(data[i+1] * g);
+        data[i+2] = dpTypes.byte(data[i+2] * b);
+      }
+
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncTemperature : async function (value) {
+      let promise = new Promise(resolve => {
+        const res = this.temperature(value);
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+
+
+    hue : function (value) {
+      try {
+        value = parseFloat(value);
+      } catch(error) {
+        console.error(`Value: ${value} cant be parsed to float.`, error)
+        return;
+      }
+
+      if (value > 180) { value = 180; }
+      if (value < -180) { value = -180; }
+
+      let imgData = this.dpCtx.getPixelData();
+      let data = imgData.data;
+
+      for(var i = 0; i < data.length; i += 4) {
+        let hsl = this.dpColor.rgbToHSL(data[i], data[i+1], data[i+2]);
+
+        hsl.h = hsl.h + ( value / 360.0 );
+
+        let rgb = this.dpColor.hslToRGB(hsl.h, hsl.s, hsl.l);
+
+        data[i] = rgb.r;
+        data[i+1] = rgb.g;
+        data[i+2] = rgb.b;
+      }
+
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncHue : async function (value) {
+      let promise = new Promise(resolve => {
+        const res = this.hue(value);
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+    saturation : function (value) {
+      try {
+        value = parseFloat(value);
+      } catch(error) {
+        console.error(`Value: ${value} cant be parsed to float.`, error)
+        return;
+      }
+
+      if (value > 100) { value = 100; }
+      if (value < -100) { value = -100; }
+
+      value = (100.0 + value) / 100.0;
+      value *= value;
+
+      let luR = 0.3086;
+      let luG = 0.6094;
+      let luB = 0.0820;
+
+      let imgData = this.dpCtx.getPixelData();
+      let data = imgData.data;
+
+      for(var i = 0; i < data.length; i += 4) {
+        let red = data[i], green = data[i + 1], blue = data[i + 2];
+
+        data[i] = dpTypes.byte(
+          ( ((1 - value)*luR + value)*red + ((1 - value)*luG)*green + ((1 - value)*luB)*blue )
+        );
+        
+        data[i+1] = dpTypes.byte(
+          ( ((1 - value)*luR)*red + ((1 - value)*luG + value)*green + ((1 - value)*luB)*blue )
+        );
+
+        data[i+2] = dpTypes.byte(
+          ( ((1 - value)*luR)*red + ((1 - value)*luG)*green + ((1 - value)*luB + value)*blue )
+        );
+      }
+
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncSaturation : async function (value) {
+      let promise = new Promise(resolve => {
+        const res = this.saturation(value);
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+    lightness : function (value) {
+      try {
+        value = parseInt(value);
+      } catch(error) {
+        console.error(`Value: ${value} cant be parsed to int.`, error)
+        return;
+      }
+
+      if (value > 100) { value = 100; }
+      if (value < -100) { value = -100; }
+
+      value = 2.55 * value;
+
+      let imgData = this.dpCtx.getPixelData();
+      let data = imgData.data;
+
+      for(var i = 0; i < data.length; i += 4) {
+        data[i] = dpTypes.byte(data[i] + value);
+        data[i+1] = dpTypes.byte(data[i+1] + value);
+        data[i+2] = dpTypes.byte(data[i+2] + value);
+      }
+
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncLightness : async function (value) {
+      let promise = new Promise(resolve => {
+        const res = this.lightness(value);
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+  }
+
+	window.dpImageProcessing = dpImageProcessing;
 
 } )( window );
