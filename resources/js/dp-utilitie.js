@@ -24,14 +24,14 @@ window.dpAJAX = null;
 window.dpImageProcessing = null;
 
 
+
 // *********************** 
 // Global ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // *********************** 
 
 
 
-class dpTypes
-{
+class dpTypes {
   static byte(val) { 
     if (!val) { return 0 ; }
 
@@ -716,7 +716,7 @@ class dpMatrix {
         xhr.onload = () => {
           if (xhr.status != 200) { 
             console.error(`Error ${xhr.status}: ${xhr.statusText}`);
-            this.error.next(xhr.status, xhr.statusText);
+            this.error.next({status:xhr.status, statusText:xhr.statusText});
             reject(xhr.status, xhr.statusText);
           } else {
             const respHeaders = xhr.getAllResponseHeaders().split('\r\n').reduce((result, current) => {
@@ -764,7 +764,7 @@ class dpMatrix {
         xhr.onload = () => {
           if (xhr.status != 200) { 
             console.error(`Error ${xhr.status}: ${xhr.statusText}`);
-            this.error.next(xhr.status, xhr.statusText);
+            this.error.next({status:xhr.status, statusText:xhr.statusText});
             reject(xhr.status, xhr.statusText);
           } else {
             const respHeaders = xhr.getAllResponseHeaders().split('\r\n').reduce((result, current) => {
