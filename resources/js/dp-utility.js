@@ -52,7 +52,7 @@ function dpGetDOM(value) {
   }
 
   if (firstChar == '<') {
-    return document.getElementsByTagName(subFirst.substr(0, value.length-2));
+    return document.getElementsByTagName(subFirst.substr(0, subFirst.length-1));
   }
 
   return document.querySelectorAll(value);
