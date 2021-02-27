@@ -61,9 +61,8 @@ function dpGetDOM(value) {
 
 
 class dp {
-
   static $ = dpGetDOM;
-  
+  static onload = function(){};
 }
 
 
@@ -1308,7 +1307,7 @@ class dpMatrix {
 
   function dpInit() {
     this.init((e) => {
-
+      if (typeof dp.onload == 'function') dp.onload();
     });
   }
 
