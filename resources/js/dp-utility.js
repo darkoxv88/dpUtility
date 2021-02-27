@@ -1,6 +1,6 @@
 /*
   Made by: Darko Petrović
-  FB: https://www.facebook.com/WitchkingofAngmarr
+  FB: https://www.facebook.com/WitchkingOfAngmarr
   GitHub: https://github.com/darkoxv88
 
   Version: 1.0.0
