@@ -61,12 +61,15 @@ function dpGetDOM(value) {
 
 
 class dp {
+
   static $ = dpGetDOM;
+  
 }
 
 
 
 class dpTypes {
+
   static byte(val) { 
     if (!val) { return 0 ; }
 
@@ -169,6 +172,7 @@ class dpMath {
 
 
 class dpVector {
+
   static add(v1, v2) {
     return dpTypes.vector3D(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z);
   }
