@@ -23,11 +23,46 @@ window.dpAJAX = null;
 
 window.dpImageProcessing = null;
 
+window.dpInit = null;
+
 
 
 // *********************** 
 // Global ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // *********************** 
+
+
+
+function dpGetDOM(value) {
+  if (typeof value != 'string' || !value) return null;
+
+  let firstChar = value[0];
+  let subFirst = value.substr(1);
+
+  if (firstChar == '#') {
+    return document.getElementById(subFirst);
+  }
+
+  if (firstChar == '.') {
+    return document.getElementsByClassName(subFirst);
+  }
+
+  if (firstChar == '&') { 
+    return document.getElementsByName(subFirst);
+  }
+
+  if (firstChar == '<') {
+    return document.getElementsByTagName(subFirst.substr(0, value.length-2));
+  }
+
+  return document.querySelectorAll(value);
+}
+
+
+
+class dp {
+  static $ = dpGetDOM;
+}
 
 
 
@@ -1254,5 +1289,56 @@ class dpMatrix {
   }
 
 	window.dpImageProcessing = dpImageProcessing;
+
+} )( window );
+
+
+
+// *********************** 
+// Other ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// *********************** 
+
+
+
+( function( window ) {
+
+  function dpInit() {
+    this.init((e) => {
+
+    });
+  }
+
+  dpInit.prototype = {
+
+    init : function(loadFunc) {
+      if (typeof loadFunc != 'function') return null;
+
+      if (window.addEventListener) {
+        window.addEventListener("load", loadFunc, false);
+        return null;
+      }
+
+      if(window.attachEvent) {
+        window.attachEvent('onload', loadFunc);
+        return null;
+      }
+
+      if(window.onload) {
+        var currentWindowOnLoad = window.onload;
+
+        var newWindowOnLoad = function(evt) {
+          currentWindowOnLoad(evt);
+          loadFunc(evt);
+        };
+
+        window.onload = newWindowOnLoad;
+      } else { 
+        window.onload = loadFunc;
+      }
+    },
+
+  }
+
+	window.dpInit = new dpInit();
 
 } )( window );
