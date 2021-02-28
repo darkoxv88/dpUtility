@@ -32,7 +32,10 @@ let index = {
   },
 };
 
-
+dpComponents.register('dp-a', '.a{display: block}', '', 'function', class test{});
+dpComponents.register('dp-a', '.a{display: block}', '', 'function', class test{});
+dpComponents.register('dp-b', '.b{display: block}', '', 'function', class test{});
+dpComponents.register('dp-b', '.b{display: block}', '', 'function', class test{});
 
 ( function( window ) {
   

@@ -58,10 +58,21 @@ function dpGetDOM(value) {
   return document.querySelectorAll(value);
 }
 
+function dpDeserializeStringTo1dObj(str) {
+  let tempArray = {};
+  let splitByAND = str.split('&');
 
+  for(let i in splitByAND) {
+    let splitByEqual = splitByAND[i].split('=');
+    tempArray[splitByEqual[0]] = splitByEqual[1];
+  }
+
+  return tempArray;
+}
 
 class dp {
   static $ = dpGetDOM;
+  static deserialize = dpDeserializeStringTo1dObj;
   static onload = function(){};
 }
 
@@ -838,6 +849,87 @@ class dpMatrix {
   window.dpAJAX = dpAJAX;
 
 } )( window );
+
+
+
+class dpComponents {
+
+  static components = {}
+  static logic = {}
+
+  static async registerStyle(tag, style) {
+    let promise = new Promise(resolve => {
+      let head = dp.$('<head>')[0];
+      let dpStyles = dp.$('<dp-styles>');
+
+      if (dpStyles.length == 0) {
+        dpStyles = document.createElement('dp-styles');
+        dpStyles.setAttribute('hidden', true);
+        head.append(dpStyles);
+      } else {
+        dpStyles = dpStyles[0];
+      }
+
+      let styleID = dp.$('#dp-style-' + tag);
+      let buildStyle = function(tag, style) {
+        let count = [...style].filter(x => x === '{').length;
+        let s = style.split('}');
+
+        let output = '';
+        for(let i in s) {
+          if (i == s.length-1) return output;
+          output += tag + " " + s[i] + " }"
+        }
+      }
+
+      if (styleID) {
+        styleID.innerHTML = buildStyle(tag, style);
+        resolve(true);
+      }
+
+      let styleInner = document.createElement('style');
+      styleInner.setAttribute('id', '#dp-style-' + tag);
+      styleInner.innerHTML = buildStyle(tag, style);
+      dpStyles.append(styleInner);
+      
+      resolve(true);
+    });
+
+    return await promise;
+  }
+
+  static async register(tag, style, template, templateType = 'function', templateClass) {
+    if(this.components[tag]) { return false; }
+
+    this.components[tag] = {};
+
+    let promise = new Promise(async (resolve) => {
+      if(typeof tag !== 'string') resolve(false);
+
+      let activateClass;
+      let activateStyle = await this.registerStyle(tag, style);
+
+      this.components[tag] = {
+        name: tag,
+        style: activateStyle,
+        template : template,
+      }
+      
+      if(typeof templateClass == 'function') activateClass = new templateClass();
+
+      this.logic[tag] = activateClass;
+
+      resolve(true);
+    });
+
+    return await promise;
+  }
+
+  static event(tag, func, data) {
+    if (typeof this.logic[tag][func] == 'function') this.logic[tag][func](data);
+  }
+
+}
 
 
 
