@@ -213,11 +213,11 @@ class dpVector {
   }
 
   static crossProduct(v1, v2) {
-    let v = dpTypes.vector3D(0, 0, 0);
-    v.x = v1.y*v2.z - v1.z*v2.y;
-    v.y = v1.z*v2.x - v1.x*v2.z;
-    v.z = v1.x*v2.y - v1.y*v2.x;
-    return v;
+    return dpTypes.vector3D(
+      v1.y*v2.z - v1.z*v2.y, 
+      v1.z*v2.x - v1.x*v2.z, 
+      v1.x*v2.y - v1.y*v2.x
+    );
   }
 
 }
