@@ -16,10 +16,25 @@
   Software authors provide no warranty with the software and are not liable for anything.
 */
 
+class Engine extends dp3Dengine {
+
+  loadView(ele) {
+    let view = dp.$('<app-display>')[0];
+    view.innerHTML = '';
+    view.append(ele);
+  }
+
+  onStart() {
+    
+  }
+
+}
+
 let index = {
   test : null,
+  _3D : null,
 
-  init : function () {
+  init : function (buildEngine=true) {
     let c = new dpAJAX();
 
     c.get('test/test.html').then((data) => {
@@ -34,6 +49,10 @@ let index = {
       await this.test.rotateImage(true);
       img.src = this.test.getImg();
     });
+
+    if(buildEngine) {
+      this._3D = new Engine(1);
+    }
   },
 };
 
