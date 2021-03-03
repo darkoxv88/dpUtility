@@ -38,6 +38,22 @@ window.dpInit = null;
 
 
 
+try {
+  eval('let foo = 1;');
+} catch (e) { 
+  console.error('Missing features' + '-->' + e)
+}
+
+( function( ) {
+
+  let scriptInit =  function () {
+    
+  }
+
+	scriptInit();
+
+} )( );
+
 function dpGetDOM(value) {
   if (typeof value != 'string' || !value) return null;
 
@@ -63,7 +79,7 @@ function dpGetDOM(value) {
   return document.querySelectorAll(value);
 }
 
-function dpDeserializeStringTo1dObj(str) {
+function dpDeserializeGetQueryString(str) {
   let tempArray = {};
   let splitByAND = str.split('&');
 
@@ -77,7 +93,7 @@ function dpDeserializeStringTo1dObj(str) {
 
 class dp {
   static $ = dpGetDOM;
-  static deserialize = dpDeserializeStringTo1dObj;
+  static deserialize = dpDeserializeGetQueryString;
   static onload = function(){};
 }
 
@@ -224,12 +240,6 @@ class dpVector {
       v1.x*v2.y - v1.y*v2.x
     );
   }
-
-}
-
-
-
-class dpMatrix {
 
 }
 
@@ -757,7 +767,7 @@ class dpMatrix {
       return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
 
-        xhr.open(type, url);
+        xhr.open(type, url, true);
 
         if (typeof(header) === 'object') {
           for(let item in header) {
@@ -805,7 +815,7 @@ class dpMatrix {
       return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
 
-        xhr.open(type, url);
+        xhr.open(type, url, true);
 
         if (typeof(header) === 'object') {
           for(let item in header) {
@@ -893,7 +903,7 @@ class dpComponents {
       }
 
       let styleInner = document.createElement('style');
-      styleInner.setAttribute('id', '#dp-style-' + tag);
+      styleInner.setAttribute('id', 'dp-style-' + tag);
       styleInner.innerHTML = buildStyle(tag, style);
       dpStyles.append(styleInner);
       
