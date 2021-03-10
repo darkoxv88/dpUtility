@@ -42,12 +42,24 @@ let index = {
     });
 
     this.test = new dpImageProcessing(async () => {
-      let img = document.getElementById("test-img");
-      await this.test.asyncLightness(50);
+      /*
+      	<input type="file" onchange="index.test.loadImage(event)"></input>
+        <img style="margin: 6px;" id="org-img" width="500px" height="auto"></img>
+			  <img id="test-img" width="500px" height="auto"></img>
+      */
+      /*
+      await this.test.asyncTemperature(5500);
+      await this.test.asyncLightness(5);
+      await this.test.asyncGamma(1.05)
+      await this.test.asyncHue(90)
       await this.test.flipImage(true, false);
       await this.test.rotateImage(true);
-      await this.test.rotateImage(true);
-      img.src = this.test.getImg();
+      await this.test.asyncSaturation(55);
+      */
+      await this.test.asyncHighpass();
+      console.log(await this.test.asyncHistogram());
+      dp.$("#org-img").src  = this.test.getOrgImg();
+      dp.$("#test-img").src = this.test.getImg();
     });
 
     if(buildEngine) {
@@ -62,15 +74,15 @@ dpComponents.register('dp-b', '.b{display: block}', '', 'function', class test{}
 dpComponents.register('dp-b', '.b{display: block}', '', 'function', class test{});
 
 ( function( window ) {
-  
+
   function appInit() {
     this.init();
   }
 
   appInit.prototype = {
 
-    init : function() { 
-      index.init();
+    init : function() {
+      dp.registerOnload(() => {index.init();});
     },
 
   }
