@@ -693,7 +693,7 @@ class dpComponents {
     return await promise;
   }
 
-  static async register(tag, style, template, templateType = 'function', templateClass) {
+  static async register(tag, style, template, buildType = 'function', templateClass) {
     if(this._components[tag]) { return false; }
 
     this._components[tag] = {};
@@ -708,6 +708,7 @@ class dpComponents {
         name: tag,
         style: activateStyle,
         template : template,
+        type : buildType,
       }
       
       if(typeof templateClass == 'function') activateClass = new templateClass();
@@ -718,6 +719,10 @@ class dpComponents {
     });
 
     return await promise;
+  }
+
+  static buildView(tag) {
+    
   }
 
   static event(tag, func, data) {

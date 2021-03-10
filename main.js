@@ -49,17 +49,14 @@ let index = {
         <img style="margin: 6px;" id="org-img" width="500px" height="auto"></img>
 			  <img id="test-img" width="500px" height="auto"></img>
       */
-      /*
-      await this.test.asyncTemperature(5500);
-      await this.test.asyncLightness(5);
-      await this.test.asyncGamma(1.05);
-      await this.test.asyncHue(90);
+      await this.test.asyncTemperature(6200);
+      await this.test.asyncLightness(7);
+      await this.test.asyncGamma(1.15)
+      await this.test.asyncHue(38)
       await this.test.flipImage(true, false);
       await this.test.rotateImage(true);
-      await this.test.asyncSaturation(55);
-      */
-      await this.test.asyncTemperature(1500);
-      await this.test.asyncGaussian(2);
+      await this.test.asyncSaturation(-3);
+      await this.test.asyncHighpass(3);
       console.log(await this.test.asyncHistogram());
       dp.$("#org-img").src  = this.test.getOrgImg();
       dp.$("#test-img").src = this.test.getImg();
@@ -71,25 +68,9 @@ let index = {
   },
 };
 
-dpComponents.register('dp-a', '.a{display: block}', '', 'function', class test{});
-dpComponents.register('dp-a', '.a{display: block}', '', 'function', class test{});
-dpComponents.register('dp-b', '.b{display: block}', '', 'function', class test{});
-dpComponents.register('dp-b', '.b{display: block}', '', 'function', class test{});
+dpComponents.register('app-a', '.a{display: block}', null, 'function', class test{});
+dpComponents.register('app-b', '.b{display: block}', null, 'function', class test{});
 
-( function( window ) {
-
-  function appInit() {
-    this.init();
-  }
-
-  appInit.prototype = {
-
-    init : function() {
-      dp.registerOnload(() => {index.init();});
-    },
-
-  }
-
-	window.appInit = new appInit();
-
-} )( window );
+dp.registerOnload(() => {
+  index.init();
+});

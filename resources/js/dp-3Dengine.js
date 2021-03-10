@@ -152,7 +152,7 @@ class dp3DengineBase {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
     let tag = document.createElement('dp-engine');
-    tag.setAttribute('engine-index', this.index);
+    tag.setAttribute('dp-engine-index', this.index);
     tag.setAttribute('style', 'display: block; width: 100%; height: 100%;');
     let div = document.createElement('div');
     div.setAttribute('style', 'width: 100%; height: 100%;');
