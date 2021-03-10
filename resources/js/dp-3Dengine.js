@@ -8,7 +8,7 @@
   CodeForces: https://codeforces.com/profile/darkoxv88
   GitHub: https://github.com/darkoxv88
 
-  Version: 1.0.0
+  Version: 0.0.1
 
   Software can be modified, used commercially, and distributed.
   Software can be modified and used in private.

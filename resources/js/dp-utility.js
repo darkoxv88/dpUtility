@@ -8,7 +8,7 @@
   CodeForces: https://codeforces.com/profile/darkoxv88
   GitHub: https://github.com/darkoxv88
 
-  Version: 1.0.0
+  Version: 1.0.1
 
   Software can be modified, used commercially, and distributed.
   Software can be modified and used in private.
@@ -27,11 +27,18 @@ try {
   console.error('Missing features' + '-->' + e);
 }
 
+window.dp = null;
+window.dpTypes = null;
+
+window.dpMath = null;
+window.dpVector = null;
+
 window.dpSubject = null;
 window.dpCanvas2Dctx = null;
 
 window.dpCookies = null;
 window.dpAJAX = null;
+window.dpComponents = null;
 
 window.dpColor = null;
 window.dpImageProcessing = null;
@@ -84,6 +91,7 @@ function dpDeserializeGetQueryString1D(str) {
 }
 
 class dp {
+
   static $ = dpGetDOM;
   static deserialize = dpDeserializeGetQueryString1D;
   static each = (obj, callback) => {
@@ -112,7 +120,7 @@ class dp {
     for (let i = 0; i < dp._onloadEvents.length; i++) {
       if (typeof dp._onloadEvents[i] == 'function') dp._onloadEvents[i]();
     }
-  };
+  }
 
 }
 
@@ -726,199 +734,185 @@ class dpComponents {
 
 
 
-( function( window ) {
-  
-  function dpColor() {
-    this.init();
+class dpColor  {
+
+  static getKelvinTable() {
+    const obj = {
+      1000: [255, 56, 0],
+      1500: [255, 109, 0],
+      1900: [255, 131, 0],
+      2000: [255, 137, 18],
+      2200: [255, 147, 44],
+      2500: [255, 161, 72],
+      2700: [255, 169, 87],
+      2800: [255, 173, 94],
+      2900: [255, 177, 101],
+      3000: [255, 180, 107],
+      3500: [255, 196, 137],
+      4000: [255, 209, 163],
+      4100: [255, 211, 168],
+      4300: [255, 215, 177],
+      4500: [255, 219, 186],
+      5000: [255, 228, 206],
+      5100: [255, 230, 210],
+      5200: [255, 232, 213],
+      5300: [255, 233, 217],
+      5400: [255, 235, 220],
+      5500: [255, 236, 224],
+      5600: [255, 238, 227],
+      5700: [255, 239, 230],
+      6000: [255, 243, 239],
+      6500: [255, 249, 253],
+      6600: [254, 249, 255],
+      6700: [252, 247, 255],
+      6800: [249, 246, 255],
+      6900: [247, 245, 255],
+      7000: [245, 243, 255],
+      7100: [243, 242, 255],
+      7200: [240, 241, 255],
+      7300: [239, 240, 255],
+      7400: [237, 239, 255],
+      7500: [235, 238, 255],
+      8000: [227, 233, 255],
+      8500: [220, 229, 255],
+      9000: [214, 225, 255],
+      9300: [210, 223, 255],
+      9500: [208, 222, 255],
+      9600: [207, 221, 255],
+      9700: [207, 221, 255],
+      9800: [206, 220, 255],
+      9900: [205, 220, 255],
+      10000: [204, 219, 255],
+      10500: [200, 217, 255],
+      11000: [200, 213, 255],
+      11500: [193, 213, 255],
+      12000: [191, 211, 255],
+      12500: [188, 210, 255],
+      13000: [186, 208, 255],
+      13500: [184, 207, 255],
+      14000: [182, 206, 255],
+      14500: [180, 205, 255],
+      15000: [179, 204, 255],
+      15500: [177, 203, 255],
+      16000: [176, 202, 255],
+      16500: [175, 201, 255],
+      17000: [174, 200, 255],
+      17500: [173, 200, 255],
+    };
+
+    Object.freeze(obj);
+
+    return obj;
   }
 
-  dpColor.prototype = {
+  static rgbToHSL(cR, cG, cB) {
 
-    kelvinTable : { },
+    let r = dpTypes.byte(cR) / 255;
+    let g = dpTypes.byte(cG) / 255;
+    let b = dpTypes.byte(cB) / 255;
 
-    init : function() { 
-      this.kelvinTable = this.getKelvinTable();
-    },
+    let max = Math.max(r, g, b); 
+    let min = Math.min(r, g, b);
+    let del = max - min;
 
-    getKelvinTable : function() {
-      const obj = {
-        1000: [255, 56, 0],
-        1500: [255, 109, 0],
-        1900: [255, 131, 0],
-        2000: [255, 137, 18],
-        2200: [255, 147, 44],
-        2500: [255, 161, 72],
-        2700: [255, 169, 87],
-        2800: [255, 173, 94],
-        2900: [255, 177, 101],
-        3000: [255, 180, 107],
-        3500: [255, 196, 137],
-        4000: [255, 209, 163],
-        4100: [255, 211, 168],
-        4300: [255, 215, 177],
-        4500: [255, 219, 186],
-        5000: [255, 228, 206],
-        5100: [255, 230, 210],
-        5200: [255, 232, 213],
-        5300: [255, 233, 217],
-        5400: [255, 235, 220],
-        5500: [255, 236, 224],
-        5600: [255, 238, 227],
-        5700: [255, 239, 230],
-        6000: [255, 243, 239],
-        6500: [255, 249, 253],
-        6600: [254, 249, 255],
-        6700: [252, 247, 255],
-        6800: [249, 246, 255],
-        6900: [247, 245, 255],
-        7000: [245, 243, 255],
-        7100: [243, 242, 255],
-        7200: [240, 241, 255],
-        7300: [239, 240, 255],
-        7400: [237, 239, 255],
-        7500: [235, 238, 255],
-        8000: [227, 233, 255],
-        8500: [220, 229, 255],
-        9000: [214, 225, 255],
-        9300: [210, 223, 255],
-        9500: [208, 222, 255],
-        9600: [207, 221, 255],
-        9700: [207, 221, 255],
-        9800: [206, 220, 255],
-        9900: [205, 220, 255],
-        10000: [204, 219, 255],
-        10500: [200, 217, 255],
-        11000: [200, 213, 255],
-        11500: [193, 213, 255],
-        12000: [191, 211, 255],
-        12500: [188, 210, 255],
-        13000: [186, 208, 255],
-        13500: [184, 207, 255],
-        14000: [182, 206, 255],
-        14500: [180, 205, 255],
-        15000: [179, 204, 255],
-        15500: [177, 203, 255],
-        16000: [176, 202, 255],
-        16500: [175, 201, 255],
-        17000: [174, 200, 255],
-        17500: [173, 200, 255],
+    let h, s, l = (max + min) / 2;
+  
+    if (max == min) {
+      h = 0;
+      s = 0;
+    } else {
+      if ( l < 0.5 ) { 
+        s = del / ( max + min )
+      } else { 
+        s = del / ( 2 - max - min ); 
       };
 
-      return obj;
-    },
+      let delR = ( ( ( max - r ) / 6 ) + ( del / 2 ) ) / del;
+      let delG = ( ( ( max - g ) / 6 ) + ( del / 2 ) ) / del;
+      let delB = ( ( ( max - b ) / 6 ) + ( del / 2 ) ) / del;
 
-    rgbToHSL : function(cR, cG, cB) {
+      if      ( r == max ) h = delB - delG;
+      else if ( g == max ) h = ( 1 / 3 ) + delR - delB;
+      else if ( b == max ) h = ( 2 / 3 ) + delG - delR;
 
-      let r = dpTypes.byte(cR) / 255;
-      let g = dpTypes.byte(cG) / 255;
-      let b = dpTypes.byte(cB) / 255;
-
-      let max = Math.max(r, g, b); 
-      let min = Math.min(r, g, b);
-      let del = max - min;
-
-      let h, s, l = (max + min) / 2;
-    
-      if (max == min) {
-        h = 0;
-        s = 0;
-      } else {
-        if ( l < 0.5 ) { 
-          s = del / ( max + min )
-        } else { 
-          s = del / ( 2 - max - min ); 
-        };
-
-        let delR = ( ( ( max - r ) / 6 ) + ( del / 2 ) ) / del;
-        let delG = ( ( ( max - g ) / 6 ) + ( del / 2 ) ) / del;
-        let delB = ( ( ( max - b ) / 6 ) + ( del / 2 ) ) / del;
-
-        if      ( r == max ) h = delB - delG;
-        else if ( g == max ) h = ( 1 / 3 ) + delR - delB;
-        else if ( b == max ) h = ( 2 / 3 ) + delG - delR;
-
-        if ( h < 0 ) h += 1;
-        if ( h > 1 ) h -= 1;
-      }
-
-      return {h: h, s: s, l: l};
-    },
-
-    hslToRGB : function(h, s, l) {
-      let r, g, b = 0;
-      let val1, val2;
-
-      if ( s == 0 )
-      {
-        r = l * 255;
-        g = l * 255;
-        b = l * 255;
-      }
-      else
-      {
-        if ( l < 0.5 ) val2 = l * ( 1 + s );
-        else           val2 = ( l + s ) - ( l * s );
-      
-        val1 = 2 * l - val2;
-
-        let Hue_2_RGB = function( v1, v2, vH ) {
-          if ( vH < 0 ) vH += 1;
-          if( vH > 1 ) vH -= 1;
-
-          if ( ( 6 * vH ) < 1 ) return ( v1 + ( v2 - v1 ) * 6 * vH );
-          if ( ( 2 * vH ) < 1 ) return ( v2 );
-          if ( ( 3 * vH ) < 2 ) return ( v1 + ( v2 - v1 ) * ( ( 2 / 3 ) - vH ) * 6 );
-
-          return ( v1 );
-        };
-      
-        r = 255 * Hue_2_RGB( val1, val2, h + ( 1 / 3 ) );
-        g = 255 * Hue_2_RGB( val1, val2, h );
-        b = 255 * Hue_2_RGB( val1, val2, h - ( 1 / 3 ) );
-      }
-
-      return dpTypes.color(r, g, b);
-    },
-
-    colorTemperatureToRgb : function(value) {
-      let r, g, b;
-
-      try {
-        value = parseInt(value);
-      } catch(error) {
-        console.error(`Value: ${value} cant be parsed to int.`, error)
-        return;
-      }
-
-      if(value <= 0) { value = 1 ;}
-      if(value > 1000000) { value = 1000000 ;}
-
-      value /= 100;
-
-      if (value <= 66) {
-        r = 255;
-        g = (99.4708025861 * Math.log(value) - 161.1195681661).toFixed(0)
-      } else {
-        r = (329.698727446 * Math.pow(value - 60, -0.1332047592)).toFixed(0)
-        g = (288.1221695283 * Math.pow(value - 60, -0.0755148492)).toFixed(0);
-      }
-
-      if (value >= 66) {
-        b = 255;
-      } else if (value <= 19) {
-        b = 0;
-      } else {
-        b = (138.5177312231 * Math.log(value - 10) - 305.0447927307).toFixed(0);
-      }
-
-      return dpTypes.color(r, g, b);
+      if ( h < 0 ) h += 1;
+      if ( h > 1 ) h -= 1;
     }
 
+    return {h: h, s: s, l: l};
   }
-	
-	window.dpColor = dpColor;
 
-} )( window );
+  static hslToRGB(h, s, l) {
+    let r, g, b = 0;
+    let val1, val2;
+
+    if ( s == 0 )
+    {
+      r = l * 255;
+      g = l * 255;
+      b = l * 255;
+    }
+    else
+    {
+      if ( l < 0.5 ) val2 = l * ( 1 + s );
+      else           val2 = ( l + s ) - ( l * s );
+    
+      val1 = 2 * l - val2;
+
+      let Hue_2_RGB = function( v1, v2, vH ) {
+        if ( vH < 0 ) vH += 1;
+        if( vH > 1 ) vH -= 1;
+
+        if ( ( 6 * vH ) < 1 ) return ( v1 + ( v2 - v1 ) * 6 * vH );
+        if ( ( 2 * vH ) < 1 ) return ( v2 );
+        if ( ( 3 * vH ) < 2 ) return ( v1 + ( v2 - v1 ) * ( ( 2 / 3 ) - vH ) * 6 );
+
+        return ( v1 );
+      };
+    
+      r = 255 * Hue_2_RGB( val1, val2, h + ( 1 / 3 ) );
+      g = 255 * Hue_2_RGB( val1, val2, h );
+      b = 255 * Hue_2_RGB( val1, val2, h - ( 1 / 3 ) );
+    }
+
+    return dpTypes.color(r, g, b);
+  }
+
+  static colorTemperatureToRgb(value) {
+    let r, g, b;
+
+    try {
+      value = parseInt(value);
+    } catch(error) {
+      console.error(`Value: ${value} cant be parsed to int.`, error)
+      return;
+    }
+
+    if(value <= 0) { value = 1 ;}
+    if(value > 1000000) { value = 1000000 ;}
+
+    value /= 100;
+
+    if (value <= 66) {
+      r = 255;
+      g = (99.4708025861 * Math.log(value) - 161.1195681661).toFixed(0)
+    } else {
+      r = (329.698727446 * Math.pow(value - 60, -0.1332047592)).toFixed(0)
+      g = (288.1221695283 * Math.pow(value - 60, -0.0755148492)).toFixed(0);
+    }
+
+    if (value >= 66) {
+      b = 255;
+    } else if (value <= 19) {
+      b = 0;
+    } else {
+      b = (138.5177312231 * Math.log(value - 10) - 305.0447927307).toFixed(0);
+    }
+
+    return dpTypes.color(r, g, b);
+  }
+
+}
 
 
 
@@ -930,12 +924,12 @@ class dpComponents {
 
   dpImageProcessing.prototype = {
 
-    dpColor : null,
+    kelvinTable : null,
     dpCtx : null,
 
     init : function (callback) { 
-      this.dpColor = new dpColor();
       this.dpCtx = new dpCanvas2Dctx();
+      this.kelvinTable = dpColor.getKelvinTable();
       if (typeof callback == 'function') {
         this.onLoad(callback);
       }
@@ -1347,10 +1341,10 @@ class dpComponents {
 
       if (value <= 0) { return false; }
 
-      let color = this.dpColor.kelvinTable[value];
+      let color = this.kelvinTable[value];
 
       if (!color) { 
-        let gen = this.dpColor.colorTemperatureToRgb(value);
+        let gen = dpColor.colorTemperatureToRgb(value);
         color = [];
         color[0] = gen.r;
         color[1] = gen.g;
@@ -1401,11 +1395,11 @@ class dpComponents {
       let data = imgData.data;
 
       for (var i = 0; i < data.length; i += 4) {
-        let hsl = this.dpColor.rgbToHSL(data[i], data[i+1], data[i+2]);
+        let hsl = dpColor.rgbToHSL(data[i], data[i+1], data[i+2]);
 
         hsl.h = hsl.h + ( value / 360.0 );
 
-        let rgb = this.dpColor.hslToRGB(hsl.h, hsl.s, hsl.l);
+        let rgb = dpColor.hslToRGB(hsl.h, hsl.s, hsl.l);
 
         data[i] = rgb.r;
         data[i+1] = rgb.g;
@@ -1619,7 +1613,7 @@ class dpComponents {
       let imgData = this.convolution(this.dpCtx.getImageData(), operator);
 
       if ( !imgData ) return false;
-
+      
       this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
       return true;
@@ -1653,6 +1647,60 @@ class dpComponents {
     asyncSharpen : async function() {
       let promise = new Promise(resolve => {
         const res = this.sharpen();
+        resolve(res);
+      });
+
+      return await promise;
+    },
+
+    gaussian : function(type = 0) {
+      let operator = [];
+
+      switch(type) {
+        case 1: {
+          operator = [
+            1/52, 1/52, 2/52, 1/52, 1/52,
+            1/52, 2/52, 4/52, 2/52, 1/52,
+            2/52, 4/52, 8/52, 4/52, 2/52,
+            1/52, 2/52, 4/52, 2/52, 1/52,
+            1/52, 1/52, 2/52, 1/52, 1/52,
+          ];
+          break;
+        }
+        case 2: {
+          operator = [
+            1/140, 1/140, 2/140, 2/140, 2/140, 1/140, 1/140,
+            1/140, 2/140, 2/140, 4/140, 2/140, 2/140, 1/140,
+            2/140, 2/140, 4/140, 8/140, 4/140, 2/140, 2/140,
+            2/140, 4/140, 8/140, 16/140, 8/140, 4/140, 2/140,
+            2/140, 2/140, 4/140, 8/140, 4/140, 2/140, 2/140,
+            1/140, 2/140, 2/140, 4/140, 2/140, 2/140, 1/140,
+            1/140, 1/140, 2/140, 2/140, 2/140, 1/140, 1/140,
+          ];
+          break;
+        }
+        default: {
+          operator = [
+            1/16, 2/16, 1/16,
+            2/16, 4/16, 2/16,
+            1/16, 2/16, 1/16,
+          ];
+          break;
+        } 
+      }
+
+      let imgData = this.convolution(this.dpCtx.getImageData(), operator);
+
+      if ( !imgData ) return false;
+
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncGaussian : async function(type = 0) {
+      let promise = new Promise(resolve => {
+        const res = this.gaussian(type);
         resolve(res);
       });
 

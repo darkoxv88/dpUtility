@@ -16,6 +16,8 @@
   Software authors provide no warranty with the software and are not liable for anything.
 */
 
+
+
 class Engine extends dp3Dengine {
 
   loadView(ele) {
@@ -34,7 +36,7 @@ let index = {
   test : null,
   _3D : null,
 
-  init : function (buildEngine=true) {
+  init : function (buildEngine=false) {
     let c = new dpAJAX();
 
     c.get('test/test.html').then((data) => {
@@ -50,13 +52,14 @@ let index = {
       /*
       await this.test.asyncTemperature(5500);
       await this.test.asyncLightness(5);
-      await this.test.asyncGamma(1.05)
-      await this.test.asyncHue(90)
+      await this.test.asyncGamma(1.05);
+      await this.test.asyncHue(90);
       await this.test.flipImage(true, false);
       await this.test.rotateImage(true);
       await this.test.asyncSaturation(55);
       */
-      await this.test.asyncHighpass();
+      await this.test.asyncTemperature(1500);
+      await this.test.asyncGaussian(2);
       console.log(await this.test.asyncHistogram());
       dp.$("#org-img").src  = this.test.getOrgImg();
       dp.$("#test-img").src = this.test.getImg();
