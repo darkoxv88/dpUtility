@@ -1,49 +1,102 @@
-/*
-  Made by: Darko Petrović
-
+/**
   ...No moon is there, no voice, no sound
   Of beating heart; a sigh profound...
 
-  FB: https://www.facebook.com/WitchkingOfAngmarr
-  CodeForces: https://codeforces.com/profile/darkoxv88
-  GitHub: https://github.com/darkoxv88
 
-  Version: 1.0.1
+	* @author Darko Petrovic
+  * @Link Facebook: https://www.facebook.com/WitchkingOfAngmarr
+  * @Link GitHub: https://github.com/darkoxv88
+  * @Link CodeForces: https://codeforces.com/profile/darkoxv88
 
-  Software can be modified, used commercially, and distributed.
-  Software can be modified and used in private.
-  A license and copyright notice must be included in the software.
-  Software authors provide no warranty with the software and are not liable for anything.
-*/
+	* @fileoverview main.js provides a demo of dp-utility.js and dp-3d-engine
+  * @source https://github.com/darkoxv88/dpUtility
+  * @version 1.0.2
+
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in
+	all copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+	THE SOFTWARE.
+**/
 
 "use strict";
 
-try {
-  eval(`
-    let foo = 1;
-    foo = class { static test = 1; }
-  `);
-} catch (e) { 
-  console.error('Missing features' + '-->' + e);
+/**	
+  * @name dpVerifyES6
+	* @function 
+  * Verifies if browser supports ES6 (ECMAScript 2015).
+  * If the browser supports ES6, it will return true.
+  * If the test fails it will kill the script and throw an error.
+**/
+
+function dpVerifyES6() {
+  try {
+    "use strict";
+
+    const supportsES6 = function() {
+      class dpStaticTest { 
+        static test = true; 
+      }
+      class dpFoo { 
+        _test;
+        get test() { return this._test; }
+        set test(value) { this._test = value; }
+        constructor(i) { this.test = i; } 
+      }
+      class dpBar extends dpFoo { 
+        constructor() {
+          super(1);
+          this.test += 1;
+        }
+
+        supports() {
+          new Function('(val = true) => { return val; }');
+          const call = (val = dpStaticTest.test) => { return val; };
+          return call();
+        }
+      }
+
+      return (new dpBar()).supports();
+    }();
+
+    return supportsES6;
+  } catch (err) {
+    throw new Error(err);
+  }
 }
+  
+const dpConst = {
+  supportsES6 : dpVerifyES6(),
+  epsilon : 0.000001,
+}
+
+Object.freeze(dpConst);
 
 window.dp = null;
 window.dpTypes = null;
-
 window.dpMath = null;
-window.dpVector = null;
-
 window.dpSubject = null;
-window.dpCanvas2Dctx = null;
-
+window.dpCanvas2dCtx = null;
 window.dpCookies = null;
 window.dpAJAX = null;
+window.dpFrame = null;
 window.dpComponents = null;
-
 window.dpColor = null;
 window.dpImageProcessing = null;
-
-window.dpInit = null;
+window.dpInit = null;  
 
 
 
@@ -53,48 +106,64 @@ window.dpInit = null;
 
 
 
-function dpGetDOM(value) {
-  if (typeof value != 'string' || !value) return null;
-
-  let firstChar = value[0];
-  let subFirst = value.substr(1);
-
-  if (firstChar == '#') {
-    return document.getElementById(subFirst);
-  }
-
-  if (firstChar == '.') {
-    return document.getElementsByClassName(subFirst);
-  }
-
-  if (firstChar == '&') { 
-    return document.getElementsByName(subFirst);
-  }
-
-  if (firstChar == '<') {
-    return document.getElementsByTagName(subFirst.substr(0, subFirst.length-1));
-  }
-
-  return document.querySelectorAll(value);
-}
-
-function dpDeserializeGetQueryString1D(str) {
-  let tempArray = {};
-  let splitByAND = str.split('&');
-
-  for (let i in splitByAND) {
-    let splitByEqual = splitByAND[i].split('=');
-    tempArray[splitByEqual[0]] = splitByEqual[1];
-  }
-
-  return tempArray;
-}
+/**
+  * @name dp
+	* @class
+  * Static class.
+  * Holds some useful functions
+	
+  * @function deserialize
+  * @function $
+  * @function each
+  * @function onload {override}
+**/
 
 class dp {
 
-  static $ = dpGetDOM;
-  static deserialize = dpDeserializeGetQueryString1D;
-  static each = (obj, callback) => {
+  /**
+    * @name deserialize
+    * @function
+    * Performs 1D deserialization
+    * @param {string} str
+  **/
+  static deserialize = function(str) {
+    let tempArray = {};
+    let splitByAND = str.split('&');
+  
+    for (let i in splitByAND) {
+      let splitByEqual = splitByAND[i].split('=');
+      tempArray[splitByEqual[0]] = splitByEqual[1];
+    }
+  
+    return tempArray;
+  };
+
+  static $ = function(value) {
+    if (typeof value != 'string' || !value) return null;
+  
+    let firstChar = value[0];
+    let subFirst = value.substr(1);
+  
+    if (firstChar == '#') {
+      return document.getElementById(subFirst);
+    }
+  
+    if (firstChar == '.') {
+      return document.getElementsByClassName(subFirst);
+    }
+  
+    if (firstChar == '&') { 
+      return document.getElementsByName(subFirst);
+    }
+  
+    if (firstChar == '<') {
+      return document.getElementsByTagName(subFirst.substr(0, subFirst.length-1));
+    }
+  
+    return document.querySelectorAll(value);
+  };
+
+  static each = function(obj, callback) {
     if (typeof obj != 'object') {
       console.error('obj type needs to be object.');
       return null;
@@ -114,7 +183,7 @@ class dp {
   static registerOnload(ev) {
     if (typeof(ev) == 'function') dp._onloadEvents.push(ev);
   }
-  static callOnload = function(){
+  static callOnload = function() {
     if (typeof dp.onload == 'function') dp.onload();
 
     for (let i = 0; i < dp._onloadEvents.length; i++) {
@@ -129,7 +198,7 @@ class dp {
 class dpTypes {
 
   static byte(val) { 
-    if (!val) { return 0 ; }
+    if (!val) { return 0; }
 
     try {
       val = parseInt(val);
@@ -146,26 +215,10 @@ class dpTypes {
 
   static color(r, g, b, a = 255) {
     var obj = {
-      r : this.byte(r),
-      g : this.byte(g),
-      b : this.byte(b),
-      a : this.byte(a)
-    }
-
-    return obj;
-  }
-
-  static vector3D(x, y, z, w = 1) {
-    if (typeof(x) !== 'number') { x = 0; }
-    if (typeof(y) !== 'number') { y = 0; }
-    if (typeof(z) !== 'number') { z = 0; }
-    if (typeof(w) !== 'number') { w = 0; }
-
-    var obj = {
-      x : x,
-      y : y,
-      z : z,
-      w : w
+      r : dpTypes.byte(r),
+      g : dpTypes.byte(g),
+      b : dpTypes.byte(b),
+      a : dpTypes.byte(a)
     }
 
     return obj;
@@ -213,30 +266,42 @@ class dpMath {
     return value;
   }
 
+  static degToRad(val) {
+    return val * (Math.PI / 180);
+  }
+
+  static radToDeg(val) {
+    return val * (180 / Math.PI);
+  }
+
 }
 
 
 
-class dpVector {
+class dpVec3 {
+
+  static create(x, y, z) {
+    new Float32Array(x, y, z);
+  }
 
   static add(v1, v2) {
-    return dpTypes.vector3D(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z);
+    return new Float32Array(v1[0]+v2[0], v1[1]+v2[1], v1[2]+v2[2]);
   }
 
   static sub(v1, v2) {
-    return dpTypes.vector3D(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z);
+    return new Float32Array(v1[0]-v2[0], v1[1]-v2[1], v1[2]-v2[2]);
   }
 
   static mul(v1, v2) {
-    return dpTypes.vector3D(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z);
+    return new Float32Array(v1[0]*v2[0], v1[1]*v2[1], v1[2]*v2[2]);
   }
 
   static div(v1, v2) {
-    return dpTypes.vector3D(v1.x/v2.x, v1.y/v2.y, v1.z/v2.z);
+    return new Float32Array(v1[0]/v2[0], v1[1]/v2[1], v1[2]/v2[2]);
   }
 
   static dotProduct(v1, v2) {
-    return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
+    return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
   }
 
   static length(v) {
@@ -245,14 +310,14 @@ class dpVector {
 
   static normalise(v) {
     const l = this.length(v)
-    return dpTypes.vector3D(v.x / l, v.y / l, v.z / l);
+    return new Float32Array(v[0] / l, v[1] / l, v[2] / l);
   }
 
   static crossProduct(v1, v2) {
-    return dpTypes.vector3D(
-      v1.y*v2.z - v1.z*v2.y, 
-      v1.z*v2.x - v1.x*v2.z, 
-      v1.x*v2.y - v1.y*v2.x
+    return new Float32Array(
+      v1[1]*v2[2] - v1[2]*v2[1], 
+      v1[2]*v2[0] - v1[0]*v2[2], 
+      v1[0]*v2[1] - v1[1]*v2[0]
     );
   }
 
@@ -261,7 +326,7 @@ class dpVector {
 
 
 // *********************** 
-// Util ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Helper ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // *********************** 
 
 
@@ -327,11 +392,11 @@ class dpVector {
 
 ( function( window ) {
   
-  function dpCanvas2Dctx() {
+  function dpCanvas2dCtx() {
     this.init();
   }
 
-  dpCanvas2Dctx.prototype = {
+  dpCanvas2dCtx.prototype = {
 
     onLoadEvent : null,
     file : null,
@@ -457,7 +522,7 @@ class dpVector {
 
   }
 	
-	window.dpCanvas2Dctx = dpCanvas2Dctx;
+	window.dpCanvas2dCtx = dpCanvas2dCtx;
 
 } )( window );
 
@@ -559,23 +624,26 @@ class dpVector {
 
   dpAJAX.prototype = {
 
-    progress : null,
-    error : null,
+    _error : null,
+    _progress : null,
 
-    init : function() {
-      this.progress = new dpSubject({
+    init : function(errorIntercept = null, progressCallback = null) {
+      this._error = new dpSubject(null);
+      this._progress = new dpSubject({
         loaded : 0,
         total : 0,
       });
-      this.error = new dpSubject(null);
+
+      this.subError(errorIntercept);
+      this.subProgress(progressCallback)
     },
 
     subError : function(callback) {
-      this.error.subscribe(callback);
+      this._error.subscribe(callback);
     },
 
     subProgress : function(callback) {
-      this.progress.subscribe(callback);
+      this._progress.subscribe(callback);
     },
 
     _baseCall : async function(url, body, header, callback, type) {
@@ -595,12 +663,10 @@ class dpVector {
           }
         }
 
-        xhr.send(body);
-
         xhr.onload = () => {
           if (xhr.status != 200) { 
             console.error(`Error ${xhr.status}: ${xhr.statusText}`);
-            this.error.next({status:xhr.status, statusText:xhr.statusText});
+            this._error.next({status:xhr.status, statusText:xhr.statusText});
             reject(xhr.status, xhr.statusText);
           } else {
             const respHeaders = xhr.getAllResponseHeaders().split('\r\n').reduce((result, current) => {
@@ -619,15 +685,17 @@ class dpVector {
 
         xhr.onprogress = (event) => {
           if (event.lengthComputable) {
-            this.progress.next({loaded : event.loaded, total : event.total});
+            this._progress.next({loaded : event.loaded, total : event.total});
           } else {
-            this.progress.next(event.loaded);
+            this._progress.next(event.loaded);
           }
         };
         
         xhr.onerror = () => {
           console.error('Request failed');
         };
+
+        xhr.send(body);
       });
     },
 
@@ -644,6 +712,83 @@ class dpVector {
   window.dpAJAX = dpAJAX;
 
 } )( window );
+
+
+
+class dpFrame {
+
+  _isPaused;
+  _startingTime;
+  _lastTime;
+
+  _totalElapsedTime;
+  get totalTime() {
+    return this._totalElapsedTime;
+  }
+
+  _elapsedSinceLastLoop;
+  get deltaTime() {
+    return this._elapsedSinceLastLoop;
+  }
+
+  _onUpdate;
+  set onUpdate(value = null) {
+    if ( typeof value == 'function' ) { this._onUpdate.subscribe(value); }
+  }
+
+  _onLateUpdate;
+  set onLateUpdate(value = null) {
+    if ( typeof value == 'function' ) { this._onLateUpdate.subscribe(value); }
+  }
+
+  constructor(callbackOnStart) {
+    this._isPaused = false;
+    this._onUpdate = new dpSubject(null);
+    this._onLateUpdate = new dpSubject(null);
+
+    requestAnimationFrame((currentTime) => {
+      if( !this._startingTime ) { 
+        this._startingTime = currentTime;
+      }
+      if( !this._lastTime ) {
+        this._lastTime = currentTime;
+      }
+
+      this._totalElapsedTime = 0;
+      this._elapsedSinceLastLoop = 0;
+
+      requestAnimationFrame((t) => {this.frame(t);});
+
+      if ( typeof callbackOnStart == 'function' ) { callbackOnStart(); }
+    });
+  }
+
+  frame(currentTime) {
+    if ( this._isPaused ) {
+      requestAnimationFrame((t) => {this.frame(t);});
+      return null;
+    }
+
+    this._totalElapsedTime = currentTime - this._startingTime;
+    this._elapsedSinceLastLoop = currentTime - this._lastTime;
+
+    this._lastTime = currentTime;
+
+    this._onUpdate.next(this._lastTime);
+    this._onLateUpdate.next(this._lastTime);
+
+    requestAnimationFrame((t) => {this.frame(t);});
+  }
+
+  pause() {
+    this._isPaused = true;
+  }
+
+  unpause() {
+    this._isPaused = false;
+  }
+
+}
 
 
 
@@ -727,6 +872,10 @@ class dpComponents {
 
   static event(tag, func, data) {
     if (typeof this._logic[tag][func] == 'function') this._logic[tag][func](data);
+  }
+
+  static test() {
+    dpComponents.register('dp-a', '.a{display: block}', null, 'function', class test{});
   }
 
 }
@@ -933,7 +1082,7 @@ class dpColor  {
     dpCtx : null,
 
     init : function (callback) { 
-      this.dpCtx = new dpCanvas2Dctx();
+      this.dpCtx = new dpCanvas2dCtx();
       this.kelvinTable = dpColor.getKelvinTable();
       if (typeof callback == 'function') {
         this.onLoad(callback);
@@ -988,58 +1137,24 @@ class dpColor  {
               let currentMatH = h + matH - halfSide;
               let currentMatW = w + matW - halfSide;
 
-              let offset;
+              while ( currentMatH < 0 ) {
+                currentMatH += 1;
+              };
+
+              while ( currentMatH >= canvasHeight ) {
+                currentMatH -= 1;
+              };
+
+              while ( currentMatW < 0 ) {
+                currentMatW += 1;
+              };
+
+              while ( currentMatW >= canvasWidth ) {
+                currentMatW -= 1;
+              };
+
+              let offset = (currentMatH * canvasWidth + currentMatW) * 4;
               let operation = operationMatrix[matH * side + matW];
-
-              if ( currentMatH < 0 ) {
-                do {
-                  currentMatH += 1;
-                  if ( currentMatH >= 0 ) {
-                    break;
-                  }
-                } while ( true );
-              }
-
-              if ( currentMatH >= canvasHeight ) {
-                do {
-                  currentMatH -= 1;
-                  if ( currentMatH < canvasHeight ) {
-                    break;
-                  }
-                } while ( true );
-              }
-
-              if ( currentMatW < 0 ) {
-                do {
-                  currentMatW += 1;
-                  if ( currentMatW >= 0 ) {
-                    offset = (currentMatH * canvasWidth + currentMatW) * 4;
-                    sumR += imgData.data[offset] * operation;
-                    sumG += imgData.data[offset + 1] * operation;
-                    sumB += imgData.data[offset + 2] * operation;
-                    break;
-                  }
-                } while ( true );
-
-                continue;
-              }
-
-              if ( currentMatW >= canvasWidth ) {
-                do {
-                  currentMatW -= 1;
-                  if ( currentMatW < canvasWidth ) {
-                    offset = (currentMatH * canvasWidth + currentMatW) * 4;
-                    sumR += imgData.data[offset] * operation;
-                    sumG += imgData.data[offset + 1] * operation;
-                    sumB += imgData.data[offset + 2] * operation;
-                    break;
-                  }
-                } while ( true );
-
-                continue;
-              }
-
-              offset = (currentMatH * canvasWidth + currentMatW) * 4;
 
               sumR += imgData.data[offset] * operation;
               sumG += imgData.data[offset + 1] * operation;
