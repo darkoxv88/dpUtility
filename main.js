@@ -8,7 +8,7 @@
   * @Link GitHub: https://github.com/darkoxv88
   * @Link CodeForces: https://codeforces.com/profile/darkoxv88
 
-	* @fileoverview main.js provides a demo of dp-utility.js and dp-3d-engine
+	* @fileoverview main.js provides a demo of dp-utility.js and dp-3d-engine.js
   * @source https://github.com/darkoxv88/dpUtility
   * @version 1.0.0
 
@@ -51,11 +51,6 @@ let index = {
   _3D : null,
 
   init : function() {
-    let c = new dpAJAX();
-    c.get('test/test.html').then((data) => {
-      console.log(data);
-    });
-
     dp.$('<app-display>')[0].innerHTML = `
       <input style="margin: 6px;" type="file" onchange="index.test.loadImage(event)"></input>
       <img id="org-img" style="margin: 6px;" width="400px" height="auto"></img>
@@ -71,17 +66,23 @@ let index = {
       await this.test.rotateImage(true);
       await this.test.asyncSaturation(-3);
       await this.test.asyncHighpass(3);
+      await this.test.asyncNoise(5);
       console.log(await this.test.asyncHistogram());
       dp.$("#org-img").src  = this.test.getOrgImg();
       dp.$("#test-img").src = this.test.getImg();
     });
-
-    if(false) {
-      this._3D = new Engine(1);
-    }
   },
 };
 
-dp.registerOnload(() => {
+dp.main(() => {
+  let c = new dpAJAX();
+  c.get('test/test.html').then((data) => {
+    console.log(data);
+  });
+
   index.init();
+
+  if(false) {
+    this._3D = new Engine(1);
+  }
 });
