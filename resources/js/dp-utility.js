@@ -8,9 +8,9 @@
   * @Link GitHub: https://github.com/darkoxv88
   * @Link CodeForces: https://codeforces.com/profile/darkoxv88
 
-	* @fileoverview main.js provides a demo of dp-utility.js and dp-3d-engine
+	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.0.2
+  * @version 1.0.3
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -39,10 +39,11 @@
 	* @function 
   * Verifies if browser supports ES6 (ECMAScript 2015).
   * If the browser supports ES6, it will return true.
-  * If the test fails it will kill the script and throw an error.
+  * @param {boolean} kill
+  * If the test fails and kill is set to true it will then stop throw an error (if called in global scope it will kill the script).
 **/
 
-function dpVerifyES6() {
+function dpVerifyES6(kill = false) {
   try {
     "use strict";
 
@@ -74,14 +75,21 @@ function dpVerifyES6() {
 
     return supportsES6;
   } catch (err) {
-    throw new Error(err);
+    if (kill) {
+      throw new Error(err); 
+    } else {
+      console.error(err);
+      return false;
+    }
   }
 }
   
 const dpConst = {
   supportsES6 : dpVerifyES6(),
   epsilon : 0.000001,
+  array : (typeof Float32Array !== 'undefined') ? Float32Array : Array,
 }
+
 
 Object.freeze(dpConst);
 
@@ -96,13 +104,6 @@ window.dpFrame = null;
 window.dpComponents = null;
 window.dpColor = null;
 window.dpImageProcessing = null;
-window.dpInit = null;  
-
-
-
-// *********************** 
-// Global ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// *********************** 
 
 
 
@@ -110,7 +111,7 @@ window.dpInit = null;
   * @name dp
 	* @class
   * Static class.
-  * Holds some useful functions
+  * Holds some useful functions.
 	
   * @function deserialize
   * @function $
@@ -123,7 +124,7 @@ class dp {
   /**
     * @name deserialize
     * @function
-    * Performs 1D deserialization
+    * Performs 1D deserialization of GET query
     * @param {string} str
   **/
   static deserialize = function(str) {
@@ -138,6 +139,17 @@ class dp {
     return tempArray;
   };
 
+  /**
+    * @name $
+    * @function
+    * Gets DOMelement/s
+    * @param {string} str
+    * If the string starts with '#' it will search by id attribute.
+    * If the string starts with '.' it will search by class attribute.
+    * If the string starts with '&' it will search by name attribute.
+    * If the string is in tag format '<div>' it will search all DOM elements as that tag.
+    * Everything else will use generic query selector.
+  **/
   static $ = function(value) {
     if (typeof value != 'string' || !value) return null;
   
@@ -163,6 +175,15 @@ class dp {
     return document.querySelectorAll(value);
   };
 
+  /**
+    * @name each
+    * @function
+    * Iterates through given objects elements.
+    * @param {object} obj
+    * Objects to iterate through.
+    * @param {function} callback
+    * When called it is given 2 elements, objects key name and that keys value.
+  **/
   static each = function(obj, callback) {
     if (typeof obj != 'object') {
       console.error('obj type needs to be object.');
@@ -178,16 +199,36 @@ class dp {
     }
   };
 
-  static _onloadEvents = new Array();
-  static onload = function() { }
-  static registerOnload(ev) {
-    if (typeof(ev) == 'function') dp._onloadEvents.push(ev);
-  }
-  static callOnload = function() {
-    if (typeof dp.onload == 'function') dp.onload();
+  /**
+   * @name main
+   * @returns {void}
+   * @function
+   * This function is called as the window.onload event
+  **/
+  static main = function(loadFunc) {
+    if (typeof loadFunc != 'function') return null;
 
-    for (let i = 0; i < dp._onloadEvents.length; i++) {
-      if (typeof dp._onloadEvents[i] == 'function') dp._onloadEvents[i]();
+    if (window.addEventListener) {
+      window.addEventListener("load", loadFunc, false);
+      return null;
+    }
+
+    if (window.attachEvent) {
+      window.attachEvent('onload', loadFunc);
+      return null;
+    }
+
+    if (typeof window.onload == 'function') {
+      var currentWindowOnLoad = window.onload;
+
+      var newWindowOnLoad = function(evt) {
+        currentWindowOnLoad(evt);
+        loadFunc(evt);
+      };
+
+      window.onload = newWindowOnLoad;
+    } else { 
+      window.onload = loadFunc;
     }
   }
 
@@ -1498,7 +1539,40 @@ class dpColor  {
       return await promise;
     },
 
+    noise : function(value) {
+      try {
+        value = parseFloat(value);
+      } catch(error) {
+        console.error(`Value: ${value} cant be parsed to int.`, error)
+        return;
+      }
 
+      if (value <= 0) value = 0;
+      if (value >= 10000) value = 10000;
+
+      const level = value * 255 * 0.1
+
+      let imgData = this.dpCtx.getImageData();
+      let data = imgData.data;
+
+      for (var i = 0; i < data.length; i += 4) {
+        let random = (0.5 - Math.random()) * level;
+
+        data[i] += dpTypes.byte(random);
+        data[i+1] += dpTypes.byte(random);
+        data[i+2] += dpTypes.byte(random);
+      }
+
+      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+      return true;
+    },
+
+    asyncNoise : async function(value) {
+      let promise = new Promise(resolve => { resolve(this.noise(value)); });
+
+      return await promise;
+    },
 
     hue : function(value) {
       try {
@@ -1532,10 +1606,7 @@ class dpColor  {
     },
 
     asyncHue : async function(value) {
-      let promise = new Promise(resolve => {
-        const res = this.hue(value);
-        resolve(res);
-      });
+      let promise = new Promise(resolve => { resolve(this.hue(value)); });
 
       return await promise;
     },
@@ -1740,10 +1811,7 @@ class dpColor  {
     },
 
     asyncHighpass : async function(type = 0) {
-      let promise = new Promise(resolve => {
-        const res = this.highpass(type);
-        resolve(res);
-      });
+      let promise = new Promise(resolve => { resolve(this.highpass(type)); });
 
       return await promise;
     },
@@ -1757,7 +1825,7 @@ class dpColor  {
 
       let imgData = this.convolution(this.dpCtx.getImageData(), operator);
 
-      if ( !imgData ) return false;
+      if (!imgData) return false;
 
       this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
@@ -1811,7 +1879,7 @@ class dpColor  {
 
       let imgData = this.convolution(this.dpCtx.getImageData(), operator);
 
-      if ( !imgData ) return false;
+      if (!imgData) return false;
 
       this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
@@ -1819,10 +1887,7 @@ class dpColor  {
     },
 
     asyncGaussian : async function(type = 0) {
-      let promise = new Promise(resolve => {
-        const res = this.gaussian(type);
-        resolve(res);
-      });
+      let promise = new Promise(resolve => { resolve(this.gaussian(type)); });
 
       return await promise;
     },
@@ -1830,56 +1895,5 @@ class dpColor  {
   }
 
 	window.dpImageProcessing = dpImageProcessing;
-
-} )( window );
-
-
-
-// *********************** 
-// Other ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// *********************** 
-
-
-
-( function( window ) {
-
-  function dpInit() {
-    this.init((e) => {
-      if (typeof dp.callOnload == 'function') dp.callOnload();
-    });
-  }
-
-  dpInit.prototype = {
-
-    init : function(loadFunc) {
-      if (typeof loadFunc != 'function') return null;
-
-      if (window.addEventListener) {
-        window.addEventListener("load", loadFunc, false);
-        return null;
-      }
-
-      if (window.attachEvent) {
-        window.attachEvent('onload', loadFunc);
-        return null;
-      }
-
-      if (window.onload) {
-        var currentWindowOnLoad = window.onload;
-
-        var newWindowOnLoad = function(evt) {
-          currentWindowOnLoad(evt);
-          loadFunc(evt);
-        };
-
-        window.onload = newWindowOnLoad;
-      } else { 
-        window.onload = loadFunc;
-      }
-    },
-
-  }
-
-	window.dpInit = new dpInit();
 
 } )( window );

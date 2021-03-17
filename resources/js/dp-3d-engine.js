@@ -3,12 +3,12 @@
   Of beating heart; a sigh profound...
 
 
-		* @author Darko Petrovic
+	* @author Darko Petrovic
   * @Link Facebook: https://www.facebook.com/WitchkingOfAngmarr
   * @Link GitHub: https://github.com/darkoxv88
   * @Link CodeForces: https://codeforces.com/profile/darkoxv88
 
-	* @fileoverview main.js provides a demo of dp-utility.js and dp-3d-engine
+	* @fileoverview dp-3d-engine.js
   * @source https://github.com/darkoxv88/dpUtility
   * @version 0.0.2
 
