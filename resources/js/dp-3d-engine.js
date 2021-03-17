@@ -36,7 +36,7 @@
 
 ( function( window ) {
   
-  dpVerifyES6();
+  dpVerifyES6(true);
 
   window.dpVec3 = null;
 

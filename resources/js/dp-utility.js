@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.0.3
+  * @version 1.0.4
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -40,40 +40,38 @@
   * Verifies if browser supports ES6 (ECMAScript 2015).
   * If the browser supports ES6, it will return true.
   * @param {boolean} kill
-  * If the test fails and kill is set to true it will then stop throw an error (if called in global scope it will kill the script).
+  * If the test fails and kill is set to true it will then throw an error and if called in global scope it will kill the script.
 **/
 
-function dpVerifyES6(kill = false) {
+function dpVerifyES6(kill) {
+  var output = false;
+
   try {
-    "use strict";
+    eval(
+      `
+        class dpStaticTest { static test = true; }
 
-    const supportsES6 = function() {
-      class dpStaticTest { 
-        static test = true; 
-      }
-      class dpFoo { 
-        _test;
-        get test() { return this._test; }
-        set test(value) { this._test = value; }
-        constructor(i) { this.test = i; } 
-      }
-      class dpBar extends dpFoo { 
-        constructor() {
-          super(1);
-          this.test += 1;
+        class dpFoo { 
+          _test;
+          get test() { return this._test; }
+          set test(value) { this._test = value; }
+          constructor(i) { this.test = i; } 
         }
 
-        supports() {
-          new Function('(val = true) => { return val; }');
-          const call = (val = dpStaticTest.test) => { return val; };
-          return call();
+        class dpBar extends dpFoo {
+          constructor() { super(1); }
         }
-      }
 
-      return (new dpBar()).supports();
-    }();
+        const asyncTest = async (x = new dpBar()) => {
+          let promise = new Promise(resolve => { resolve(x); });
+          await promise;
+        }
 
-    return supportsES6;
+        asyncTest();
+
+        output = dpStaticTest.test;
+      `
+    );
   } catch (err) {
     if (kill) {
       throw new Error(err); 
@@ -82,14 +80,15 @@ function dpVerifyES6(kill = false) {
       return false;
     }
   }
+
+  return output;
 }
   
 const dpConst = {
-  supportsES6 : dpVerifyES6(),
+  supportsES6 : dpVerifyES6(true),
   epsilon : 0.000001,
   array : (typeof Float32Array !== 'undefined') ? Float32Array : Array,
 }
-
 
 Object.freeze(dpConst);
 
@@ -308,11 +307,11 @@ class dpMath {
   }
 
   static degToRad(val) {
-    return val * (Math.PI / 180);
+    if (typeof(val) == 'number') return (val * (Math.PI / 180)); else return undefined;
   }
 
   static radToDeg(val) {
-    return val * (180 / Math.PI);
+    if (typeof(val) == 'number') return (val * (180 / Math.PI)); else return undefined;
   }
 
 }
@@ -390,6 +389,7 @@ class dpVec3 {
 
     subscribe : function(callback) { 
       if (!callback) { return; }
+
       if (typeof(callback) !== 'function') { 
         console.error(`callback: ${callback} is not a function`);
         return; 
@@ -774,12 +774,12 @@ class dpFrame {
 
   _onUpdate;
   set onUpdate(value = null) {
-    if ( typeof value == 'function' ) { this._onUpdate.subscribe(value); }
+    if (typeof value == 'function') { this._onUpdate.subscribe(value); }
   }
 
   _onLateUpdate;
   set onLateUpdate(value = null) {
-    if ( typeof value == 'function' ) { this._onLateUpdate.subscribe(value); }
+    if (typeof value == 'function') { this._onLateUpdate.subscribe(value); }
   }
 
   constructor(callbackOnStart) {
@@ -788,10 +788,10 @@ class dpFrame {
     this._onLateUpdate = new dpSubject(null);
 
     requestAnimationFrame((currentTime) => {
-      if( !this._startingTime ) { 
+      if (!this._startingTime) { 
         this._startingTime = currentTime;
       }
-      if( !this._lastTime ) {
+      if (!this._lastTime) {
         this._lastTime = currentTime;
       }
 
@@ -800,12 +800,12 @@ class dpFrame {
 
       requestAnimationFrame((t) => {this.frame(t);});
 
-      if ( typeof callbackOnStart == 'function' ) { callbackOnStart(); }
+      if (typeof callbackOnStart == 'function') { callbackOnStart(); }
     });
   }
 
   frame(currentTime) {
-    if ( this._isPaused ) {
+    if (this._isPaused) {
       requestAnimationFrame((t) => {this.frame(t);});
       return null;
     }
@@ -880,12 +880,12 @@ class dpComponents {
   }
 
   static async register(tag, style, template, buildType = 'function', templateClass) {
-    if(this._components[tag]) { return false; }
+    if (this._components[tag]) { return false; }
 
     this._components[tag] = {};
 
     let promise = new Promise(async (resolve) => {
-      if(typeof tag !== 'string') resolve(false);
+      if (typeof tag !== 'string') resolve(false);
 
       let activateClass;
       let activateStyle = await this.registerStyle(tag, style);
@@ -897,7 +897,7 @@ class dpComponents {
         type : buildType,
       }
       
-      if(typeof templateClass == 'function') activateClass = new templateClass();
+      if (typeof templateClass == 'function') activateClass = new templateClass();
 
       this._logic[tag] = activateClass;
 
@@ -905,10 +905,6 @@ class dpComponents {
     });
 
     return await promise;
-  }
-
-  static buildView(tag) {
-    
   }
 
   static event(tag, func, data) {
@@ -1010,29 +1006,28 @@ class dpColor  {
     let min = Math.min(r, g, b);
     let del = max - min;
 
-    let h, s, l = (max + min) / 2;
+    let h = 0; 
+    let s = 0; 
+    let l = (max + min) / 2;
   
-    if (max == min) {
-      h = 0;
-      s = 0;
-    } else {
-      if ( l < 0.5 ) { 
-        s = del / ( max + min )
-      } else { 
-        s = del / ( 2 - max - min ); 
-      };
+    if (max == min) return {h: h, s: s, l: l};
 
-      let delR = ( ( ( max - r ) / 6 ) + ( del / 2 ) ) / del;
-      let delG = ( ( ( max - g ) / 6 ) + ( del / 2 ) ) / del;
-      let delB = ( ( ( max - b ) / 6 ) + ( del / 2 ) ) / del;
+    if (l < 0.5) { 
+      s = del / ( max + min )
+    } else { 
+      s = del / ( 2 - max - min ); 
+    };
 
-      if      ( r == max ) h = delB - delG;
-      else if ( g == max ) h = ( 1 / 3 ) + delR - delB;
-      else if ( b == max ) h = ( 2 / 3 ) + delG - delR;
+    let delR = ( ( ( max - r ) / 6 ) + ( del / 2 ) ) / del;
+    let delG = ( ( ( max - g ) / 6 ) + ( del / 2 ) ) / del;
+    let delB = ( ( ( max - b ) / 6 ) + ( del / 2 ) ) / del;
 
-      if ( h < 0 ) h += 1;
-      if ( h > 1 ) h -= 1;
-    }
+    if      (r == max) h = delB - delG;
+    else if (g == max) h = ( 1 / 3 ) + delR - delB;
+    else if (b == max) h = ( 2 / 3 ) + delG - delR;
+
+    if (h < 0) h += 1;
+    if (h > 1) h -= 1;
 
     return {h: h, s: s, l: l};
   }
@@ -1041,7 +1036,7 @@ class dpColor  {
     let r, g, b = 0;
     let val1, val2;
 
-    if ( s == 0 )
+    if (s == 0)
     {
       r = l * 255;
       g = l * 255;
@@ -1049,14 +1044,14 @@ class dpColor  {
     }
     else
     {
-      if ( l < 0.5 ) val2 = l * ( 1 + s );
+      if (l < 0.5) val2 = l * ( 1 + s );
       else           val2 = ( l + s ) - ( l * s );
     
       val1 = 2 * l - val2;
 
       let Hue_2_RGB = function( v1, v2, vH ) {
-        if ( vH < 0 ) vH += 1;
-        if( vH > 1 ) vH -= 1;
+        if (vH < 0) vH += 1;
+        if (vH > 1) vH -= 1;
 
         if ( ( 6 * vH ) < 1 ) return ( v1 + ( v2 - v1 ) * 6 * vH );
         if ( ( 2 * vH ) < 1 ) return ( v2 );
@@ -1065,9 +1060,9 @@ class dpColor  {
         return ( v1 );
       };
     
-      r = 255 * Hue_2_RGB( val1, val2, h + ( 1 / 3 ) );
-      g = 255 * Hue_2_RGB( val1, val2, h );
-      b = 255 * Hue_2_RGB( val1, val2, h - ( 1 / 3 ) );
+      r = 255 * Hue_2_RGB(val1, val2, h + ( 1 / 3 ));
+      g = 255 * Hue_2_RGB(val1, val2, h );
+      b = 255 * Hue_2_RGB(val1, val2, h - ( 1 / 3 ));
     }
 
     return dpTypes.color(r, g, b);
@@ -1149,8 +1144,6 @@ class dpColor  {
     reset : function() {
       this.dpCtx.reset();
     },
-
-
 
     convolution : function (imgData, operationMatrix) {
       if ( !(imgData instanceof ImageData) ) {
@@ -1239,10 +1232,7 @@ class dpColor  {
     },
 
     asyncHistogram : async function() {
-      let promise = new Promise(resolve => {
-        const res = this.histogram();
-        resolve(res);
-      });
+      let promise = new Promise(resolve => { resolve(this.histogram()); });
 
       return await promise;
     },
@@ -1300,31 +1290,37 @@ class dpColor  {
           data[i];
           data[i + 1] = 0;
           data[i + 2] = 0;
+          continue;
         }
         if (type === 'G') {
           data[i] = 0;
           data[i + 1];
           data[i + 2] = 0;
+          continue;
         }
         if (type === 'B') {
           data[i] = 0;
           data[i + 1] = 0;
           data[i + 2];
+          continue;
         }
         if (type === 'C') {
           data[i] = 0;
           data[i + 1];
           data[i + 2];
+          continue;
         }
         if (type === 'M') {
           data[i];
           data[i + 1] = 0;
           data[i + 2];
+          continue;
         }
         if (type === 'Y') {
           data[i];
           data[i + 1];
           data[i + 2] = 0;
+          continue;
         }
       }
       
@@ -1358,11 +1354,7 @@ class dpColor  {
     },
 
     asyncInvert : async function() {
-      let promise = new Promise(resolve => {
-        const res = this.invert();
-        resolve(res);
-      });
-
+      let promise = new Promise(resolve => { resolve(this.invert()); });
       return await promise;
     },
 
@@ -1388,11 +1380,7 @@ class dpColor  {
     },
 
     asyncGrayscale : async function(blackPass=0, whitePass=255) {
-      let promise = new Promise(resolve => {
-        const res = this.grayscale(blackPass, whitePass);
-        resolve(res);
-      });
-
+      let promise = new Promise(resolve => { resolve(this.grayscale(blackPass, whitePass)); });
       return await promise;
     },
 
@@ -1753,10 +1741,7 @@ class dpColor  {
     },
 
     asyncLowpass : async function(type = 0) {
-      let promise = new Promise(resolve => {
-        const res = this.lowpass(type);
-        resolve(res);
-      });
+      let promise = new Promise(resolve => { resolve(this.lowpass(type)); });
 
       return await promise;
     },
@@ -1812,7 +1797,6 @@ class dpColor  {
 
     asyncHighpass : async function(type = 0) {
       let promise = new Promise(resolve => { resolve(this.highpass(type)); });
-
       return await promise;
     },
 
@@ -1833,11 +1817,7 @@ class dpColor  {
     },
 
     asyncSharpen : async function() {
-      let promise = new Promise(resolve => {
-        const res = this.sharpen();
-        resolve(res);
-      });
-
+      let promise = new Promise(resolve => { resolve(this.sharpen()); });
       return await promise;
     },
 
@@ -1888,7 +1868,6 @@ class dpColor  {
 
     asyncGaussian : async function(type = 0) {
       let promise = new Promise(resolve => { resolve(this.gaussian(type)); });
-
       return await promise;
     },
 

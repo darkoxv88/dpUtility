@@ -34,7 +34,7 @@
 
 "use strict";
 
-dpVerifyES6();
+dpVerifyES6(true);
 
 class Engine extends dp3dEngine {
 
