@@ -34,9 +34,13 @@
 
 "use strict";
 
+(function() {
+  if (window.dp) window.dp = undefined;
+})()
+
 /**	
   * @name dpVerifyES6
-	* @function 
+	* @function
   * Verifies if browser supports ES6 (ECMAScript 2015).
   * If the browser supports ES6, it will return true.
   * @param {boolean} kill
@@ -47,30 +51,13 @@ function dpVerifyES6(kill) {
   var output = false;
 
   try {
-    eval(
-      `
-        class dpStaticTest { static test = true; }
-
-        class dpFoo { 
-          _test;
-          get test() { return this._test; }
-          set test(value) { this._test = value; }
-          constructor(i) { this.test = i; } 
-        }
-
-        class dpBar extends dpFoo {
-          constructor() { super(1); }
-        }
-
-        const asyncTest = async (x = new dpBar()) => {
-          let promise = new Promise(resolve => { resolve(x); });
-          await promise;
-        }
-
-        asyncTest();
-
-        output = dpStaticTest.test;
-      `
+    eval(''
+      + 'class dpStaticTest { static test = true; };'
+      + 'class dpFoo { _test; get test() { return this._test; }; set test(value) { this._test = value; }; constructor(i) { this.test = i; }; };'
+      + 'class dpBar extends dpFoo { constructor() { super(`1`); }; }'
+      + 'const asyncTest = async (x = new dpFoo()) => { let promise = new Promise(resolve => { resolve(x); }); await promise; };'
+      + 'asyncTest();'
+      + 'output = dpStaticTest.test;'
     );
   } catch (err) {
     if (kill) {
@@ -84,27 +71,13 @@ function dpVerifyES6(kill) {
   return output;
 }
   
-const dpConst = {
+var dpConst = {
   supportsES6 : dpVerifyES6(true),
   epsilon : 0.000001,
   array : (typeof Float32Array !== 'undefined') ? Float32Array : Array,
 }
 
 Object.freeze(dpConst);
-
-window.dp = null;
-window.dpTypes = null;
-window.dpMath = null;
-window.dpSubject = null;
-window.dpCanvas2dCtx = null;
-window.dpCookies = null;
-window.dpAJAX = null;
-window.dpFrame = null;
-window.dpComponents = null;
-window.dpColor = null;
-window.dpImageProcessing = null;
-
-
 
 /**
   * @name dp
@@ -115,28 +88,32 @@ window.dpImageProcessing = null;
   * @function deserialize
   * @function $
   * @function each
-  * @function onload {override}
+  * @function main
+  * @function byte
+  * @function rgba
+  * @function maxCap
+  * @function minCap
+  * @function degToRad
+  * @function radToDeg
 **/
-
-class dp {
-
+var dp = new function() {
   /**
     * @name deserialize
     * @function
     * Performs 1D deserialization of GET query
     * @param {string} str
   **/
-  static deserialize = function(str) {
+  this.deserialize = function(str) {
     let tempArray = {};
     let splitByAND = str.split('&');
-  
+
     for (let i in splitByAND) {
       let splitByEqual = splitByAND[i].split('=');
       tempArray[splitByEqual[0]] = splitByEqual[1];
     }
-  
+
     return tempArray;
-  };
+  }
 
   /**
     * @name $
@@ -149,7 +126,7 @@ class dp {
     * If the string is in tag format '<div>' it will search all DOM elements as that tag.
     * Everything else will use generic query selector.
   **/
-  static $ = function(value) {
+   this.$ = function(value) {
     if (typeof value != 'string' || !value) return null;
   
     let firstChar = value[0];
@@ -183,7 +160,7 @@ class dp {
     * @param {function} callback
     * When called it is given 2 elements, objects key name and that keys value.
   **/
-  static each = function(obj, callback) {
+  this.each = function(obj, callback) {
     if (typeof obj != 'object') {
       console.error('obj type needs to be object.');
       return null;
@@ -199,12 +176,12 @@ class dp {
   };
 
   /**
-   * @name main
-   * @returns {void}
-   * @function
-   * This function is called as the window.onload event
+    * @name main
+    * @returns {void}
+    * @function
+    * This function is called as the window.onload event
   **/
-  static main = function(loadFunc) {
+  this.main = function(loadFunc) {
     if (typeof loadFunc != 'function') return null;
 
     if (window.addEventListener) {
@@ -231,13 +208,13 @@ class dp {
     }
   }
 
-}
-
-
-
-class dpTypes {
-
-  static byte(val) { 
+  /**
+    * @name byte
+    * @function
+    * Takes a number value and tranforms it into type of intiger that ranges from 0 to 255 ( 0 <= x <= 255 ).
+    * @param {number} val
+  **/
+  this.byte = function(val) { 
     if (!val) { return 0; }
 
     try {
@@ -253,30 +230,29 @@ class dpTypes {
     return val;
   }
 
-  static color(r, g, b, a = 255) {
-    var obj = {
-      r : dpTypes.byte(r),
-      g : dpTypes.byte(g),
-      b : dpTypes.byte(b),
-      a : dpTypes.byte(a)
+  /**
+    * @name rgba
+    * @function
+    * Formats the given numbers into a object with r,g,b,a keys each representing a byte value corresponding to color chanel.
+    * @param {number} r
+    * represents RED chanel
+    * @param {number} g
+    * represents GREEN chanel
+    * @param {number} b
+    * represents BLUE chanel
+    * @param {number} a
+    * represents ALFA chanel
+  **/
+  this.rgba = function(r, g, b, a = 255) {
+    return {
+      r : this.byte(r),
+      g : this.byte(g),
+      b : this.byte(b),
+      a : this.byte(a)
     }
-
-    return obj;
   }
 
-}
-
-
-
-// *********************** 
-// Math ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// *********************** 
-
-
-
-class dpMath {
-
-  static maxCap(value, cap) {
+  this.maxCap = function(value, cap) {
     if (typeof(value) !== 'number') { 
       console.error(`value: ${value} is not a number`);
       return 0;
@@ -290,8 +266,8 @@ class dpMath {
 
     return value;
   }
-
-  static minCap(value, cap) {
+  
+  this.minCap = function(value, cap) {
     if (typeof(value) !== 'number') { 
       console.error(`value: ${value} is not a number`);
       return 0;
@@ -306,15 +282,21 @@ class dpMath {
     return value;
   }
 
-  static degToRad(val) {
+  this.degToRad = function(val) {
     if (typeof(val) == 'number') return (val * (Math.PI / 180)); else return undefined;
   }
 
-  static radToDeg(val) {
+  this.radToDeg = function(val) {
     if (typeof(val) == 'number') return (val * (180 / Math.PI)); else return undefined;
   }
 
 }
+
+
+
+// *********************** 
+// Math ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// *********************** 
 
 
 
@@ -575,184 +557,159 @@ class dpVec3 {
 
 
 
-( function( window ) {
-  
-  function dpCookies() {
-    this.init();
+function dpCookies() {
+  this.set = function(cookieName, cookieValue, cookieDurationDays = 7, type = 'day') {
+    if( typeof cookieDurationDays != 'number' ) { cookieDurationDays = 7; }
+    if( typeof cookieDurationDays <= 0 ) { cookieDurationDays = 7; }
+
+    let d = 24;
+    let h = 60;
+
+    if (type = 'hour') { d = 1; }
+    if (type = 'minute') { d = 1; h = 1; }
+
+    let date = new Date();
+    date.setTime(date.getTime() + (cookieDurationDays * d * h * 60 * 1000));
+    document.cookie = cookieName + '=' + cookieValue + ';' + 'expires=' + date.toUTCString() + ';path=/';
   }
 
-  dpCookies.prototype = {
+  this.get = function(cookieName) {
+    cookieName = cookieName + '=';
+    let decodedCookie = document.cookie.split(';');
 
-    init : function() { },
+    for ( let i = 0; i < decodedCookie.length; i++ ) {
+      let c = decodedCookie[i];
 
-    set : function(cookieName, cookieValue, cookieDurationDays = 7, type = 'day') {
-      if( typeof cookieDurationDays != 'number' ) { cookieDurationDays = 7; }
-      if( typeof cookieDurationDays <= 0 ) { cookieDurationDays = 7; }
+      while( c.charAt(0) == ' ' ) { c = c.substring(1); }
 
-      let d = 24;
-      let h = 60;
-
-      if (type = 'hour') { d = 1; }
-      if (type = 'minute') { d = 1; h = 1; }
-  
-      let date = new Date();
-      date.setTime(date.getTime() + (cookieDurationDays * d * h * 60 * 1000));
-      document.cookie = cookieName + '=' + cookieValue + ';' + 'expires=' + date.toUTCString() + ';path=/';
-    },
-
-    get : function(cookieName) {
-      cookieName = cookieName + '=';
-      let decodedCookie = document.cookie.split(';');
-  
-      for ( let i = 0; i < decodedCookie.length; i++ ) {
-        let c = decodedCookie[i];
-  
-        while( c.charAt(0) == ' ' ) { c = c.substring(1); }
-  
-        if( c.indexOf(cookieName) == 0 ) { return c.substring(cookieName.length, c.length); }
-      }
-  
-      return '';
-    },
-
-    delete : function(cookieName) {
-      let date = new Date();
-      date.setTime(date.getTime() - 1000);
-      document.cookie = cookieName + '=' + '' + ';' + 'expires=' + date.toUTCString() + ';path=/';
-    },
-
-    setObj : function(obj, cookieDurationDays = 7, type = 'day') {
-      if (typeof(obj) !== 'object') { return false; }
-
-      for (let item in obj) {
-        this.set(item, JSON.stringify(obj[item]), cookieDurationDays = 7, type = 'day');
-      }
-    },
-
-    getObj : function(obj) {
-      if (typeof(obj) !== 'object') { return false; }
-
-      let output = {}
-
-      for (let item in obj) {
-        output[item] = this.get(item);
-      }
-
-      return output;
-    },
-
-    deleteObj : function(obj) {
-      if (typeof(obj) !== 'object') { return false; }
-
-      for (let item in obj) {
-        this.delete(item);
-      }
+      if( c.indexOf(cookieName) == 0 ) { return c.substring(cookieName.length, c.length); }
     }
-    
+
+    return '';
   }
 
-  window.dpCookies = dpCookies;
-
-} )( window );
-
-
-
-( function( window ) {
-  
-  function dpAJAX() {
-    this.init();
+  this.delete = function(cookieName) {
+    let date = new Date();
+    date.setTime(date.getTime() - 1000);
+    document.cookie = cookieName + '=' + '' + ';' + 'expires=' + date.toUTCString() + ';path=/';
   }
 
-  dpAJAX.prototype = {
+  this.setObj = function(obj, cookieDurationDays = 7, type = 'day') {
+    if (typeof(obj) !== 'object') { return false; }
 
-    _error : null,
-    _progress : null,
+    for (let item in obj) {
+      this.set(item, JSON.stringify(obj[item]), cookieDurationDays = 7, type = 'day');
+    }
+  }
 
-    init : function(errorIntercept = null, progressCallback = null) {
-      this._error = new dpSubject(null);
-      this._progress = new dpSubject({
-        loaded : 0,
-        total : 0,
-      });
+  this.getObj = function(obj) {
+    if (typeof(obj) !== 'object') { return false; }
 
-      this.subError(errorIntercept);
-      this.subProgress(progressCallback)
-    },
+    let output = {}
 
-    subError : function(callback) {
-      this._error.subscribe(callback);
-    },
+    for (let item in obj) {
+      output[item] = this.get(item);
+    }
 
-    subProgress : function(callback) {
-      this._progress.subscribe(callback);
-    },
+    return output;
+  }
 
-    _baseCall : async function(url, body, header, callback, type) {
-      if (typeof type !== 'string') {
-        console.log('Call type needs to be a string!')
-        return null;
+  this.deleteObj = function(obj) {
+    if (typeof(obj) !== 'object') { return false; }
+
+    for (let item in obj) {
+      this.delete(item);
+    }
+  }
+}
+
+
+
+function dpAJAX(errorIntercept, progressCallback) {
+  this._error = new dpSubject(null);
+  this._progress = new dpSubject({
+    loaded : 0,
+    total : 0,
+  });
+
+  this.init = function() {
+    this.subError(errorIntercept);
+    this.subProgress(progressCallback);
+  }
+
+  this.subError = function(callback) {
+    this._error.subscribe(callback);
+  }
+
+  this.subProgress = function(callback) {
+    this._progress.subscribe(callback);
+  }
+
+  this._baseCall = function(url, body, header, callback, type) {
+    if (typeof type !== 'string') {
+      console.log('Call type needs to be a string!')
+      return null;
+    }
+
+    return new Promise((resolve, reject) => {
+      let xhr = new XMLHttpRequest();
+
+      xhr.open(type, url, true);
+
+      if (typeof(header) === 'object') {
+        for (let item in header) {
+          xhr.setRequestHeader(item, header[item]);
+        }
       }
 
-      return new Promise((resolve, reject) => {
-        let xhr = new XMLHttpRequest();
+      xhr.onload = () => {
+        if (xhr.status != 200) { 
+          console.error(`Error ${xhr.status}: ${xhr.statusText}`);
+          this._error.next({status:xhr.status, statusText:xhr.statusText});
+          reject(xhr.status, xhr.statusText);
+        } else {
+          const respHeaders = xhr.getAllResponseHeaders().split('\r\n').reduce((result, current) => {
+            let [name, value] = current.split(': ');
+            result[name] = value;
+            return result;
+          }, {});
 
-        xhr.open(type, url, true);
-
-        if (typeof(header) === 'object') {
-          for (let item in header) {
-            xhr.setRequestHeader(item, header[item]);
+          if (typeof(callback) === 'function') { 
+            callback(xhr.response, respHeaders); 
           }
+
+          resolve(xhr.response, respHeaders);
         }
+      };
 
-        xhr.onload = () => {
-          if (xhr.status != 200) { 
-            console.error(`Error ${xhr.status}: ${xhr.statusText}`);
-            this._error.next({status:xhr.status, statusText:xhr.statusText});
-            reject(xhr.status, xhr.statusText);
-          } else {
-            const respHeaders = xhr.getAllResponseHeaders().split('\r\n').reduce((result, current) => {
-              let [name, value] = current.split(': ');
-              result[name] = value;
-              return result;
-            }, {});
+      xhr.onprogress = (event) => {
+        if (event.lengthComputable) {
+          this._progress.next({loaded : event.loaded, total : event.total});
+        } else {
+          this._progress.next(event.loaded);
+        }
+      };
+      
+      xhr.onerror = () => {
+        console.error('Request failed');
+      };
 
-            if (typeof(callback) === 'function') { 
-              callback(xhr.response, respHeaders); 
-            }
-
-            resolve(xhr.response, respHeaders);
-          }
-        };
-
-        xhr.onprogress = (event) => {
-          if (event.lengthComputable) {
-            this._progress.next({loaded : event.loaded, total : event.total});
-          } else {
-            this._progress.next(event.loaded);
-          }
-        };
-        
-        xhr.onerror = () => {
-          console.error('Request failed');
-        };
-
-        xhr.send(body);
-      });
-    },
-
-    get : async function(url, header, callback, type='GET') {
-      return this._baseCall(url, null, header, callback, type);
-    },
-
-    post : async function(url, body, header, callback, type='POST') {
-      return this._baseCall(url, body, header, callback, type);
-    },
-    
+      xhr.send(body);
+    });
   }
 
-  window.dpAJAX = dpAJAX;
+  this.get = function(url, header, callback, type='GET') {
+    return this._baseCall(url, null, header, callback, type);
+  },
 
-} )( window );
+  this.post = function(url, body, header, callback, type='POST') {
+    return this._baseCall(url, body, header, callback, type);
+  }
+
+  this.init();
+
+  this.init = null;
+}
 
 
 
@@ -761,24 +718,16 @@ class dpFrame {
   _isPaused;
   _startingTime;
   _lastTime;
-
   _totalElapsedTime;
-  get totalTime() {
-    return this._totalElapsedTime;
-  }
-
   _elapsedSinceLastLoop;
-  get deltaTime() {
-    return this._elapsedSinceLastLoop;
-  }
 
   _onUpdate;
-  set onUpdate(value = null) {
+  onUpdate(value = null) {
     if (typeof value == 'function') { this._onUpdate.subscribe(value); }
   }
 
   _onLateUpdate;
-  set onLateUpdate(value = null) {
+  onLateUpdate(value = null) {
     if (typeof value == 'function') { this._onLateUpdate.subscribe(value); }
   }
 
@@ -815,8 +764,8 @@ class dpFrame {
 
     this._lastTime = currentTime;
 
-    this._onUpdate.next(this._lastTime);
-    this._onLateUpdate.next(this._lastTime);
+    this._onUpdate.next(this._elapsedSinceLastLoop);
+    this._onLateUpdate.next(this._elapsedSinceLastLoop);
 
     requestAnimationFrame((t) => {this.frame(t);});
   }
@@ -838,7 +787,7 @@ class dpComponents {
   static _components = {}
   static _logic = {}
 
-  static async registerStyle(tag, style) {
+  static registerStyle(tag, style) {
     let promise = new Promise(resolve => {
       let head = dp.$('<head>')[0];
       let dpStyles = dp.$('<dp-styles>');
@@ -858,8 +807,8 @@ class dpComponents {
 
         let output = '';
         for (let i in s) {
-          if (i == s.length-1) return output;
-          output += tag + " " + s[i] + " }"
+          if (i == count) return output;
+          output += tag + " " + s[i] + "} "
         }
       }
 
@@ -876,7 +825,7 @@ class dpComponents {
       resolve(true);
     });
 
-    return await promise;
+    return promise;
   }
 
   static async register(tag, style, template, buildType = 'function', templateClass) {
@@ -912,7 +861,7 @@ class dpComponents {
   }
 
   static test() {
-    dpComponents.register('dp-a', '.a{display: block}', null, 'function', class test{});
+    dpComponents.register('dp-a', '.a{display: block} .b{display: block} .c{width: 100%}', null, 'function', class test{});
   }
 
 }
@@ -927,80 +876,11 @@ class dpComponents {
 
 class dpColor  {
 
-  static getKelvinTable() {
-    const obj = {
-      1000: [255, 56, 0],
-      1500: [255, 109, 0],
-      1900: [255, 131, 0],
-      2000: [255, 137, 18],
-      2200: [255, 147, 44],
-      2500: [255, 161, 72],
-      2700: [255, 169, 87],
-      2800: [255, 173, 94],
-      2900: [255, 177, 101],
-      3000: [255, 180, 107],
-      3500: [255, 196, 137],
-      4000: [255, 209, 163],
-      4100: [255, 211, 168],
-      4300: [255, 215, 177],
-      4500: [255, 219, 186],
-      5000: [255, 228, 206],
-      5100: [255, 230, 210],
-      5200: [255, 232, 213],
-      5300: [255, 233, 217],
-      5400: [255, 235, 220],
-      5500: [255, 236, 224],
-      5600: [255, 238, 227],
-      5700: [255, 239, 230],
-      6000: [255, 243, 239],
-      6500: [255, 249, 253],
-      6600: [254, 249, 255],
-      6700: [252, 247, 255],
-      6800: [249, 246, 255],
-      6900: [247, 245, 255],
-      7000: [245, 243, 255],
-      7100: [243, 242, 255],
-      7200: [240, 241, 255],
-      7300: [239, 240, 255],
-      7400: [237, 239, 255],
-      7500: [235, 238, 255],
-      8000: [227, 233, 255],
-      8500: [220, 229, 255],
-      9000: [214, 225, 255],
-      9300: [210, 223, 255],
-      9500: [208, 222, 255],
-      9600: [207, 221, 255],
-      9700: [207, 221, 255],
-      9800: [206, 220, 255],
-      9900: [205, 220, 255],
-      10000: [204, 219, 255],
-      10500: [200, 217, 255],
-      11000: [200, 213, 255],
-      11500: [193, 213, 255],
-      12000: [191, 211, 255],
-      12500: [188, 210, 255],
-      13000: [186, 208, 255],
-      13500: [184, 207, 255],
-      14000: [182, 206, 255],
-      14500: [180, 205, 255],
-      15000: [179, 204, 255],
-      15500: [177, 203, 255],
-      16000: [176, 202, 255],
-      16500: [175, 201, 255],
-      17000: [174, 200, 255],
-      17500: [173, 200, 255],
-    };
-
-    Object.freeze(obj);
-
-    return obj;
-  }
-
   static rgbToHSL(cR, cG, cB) {
 
-    let r = dpTypes.byte(cR) / 255;
-    let g = dpTypes.byte(cG) / 255;
-    let b = dpTypes.byte(cB) / 255;
+    let r = dp.byte(cR) / 255;
+    let g = dp.byte(cG) / 255;
+    let b = dp.byte(cB) / 255;
 
     let max = Math.max(r, g, b); 
     let min = Math.min(r, g, b);
@@ -1065,7 +945,7 @@ class dpColor  {
       b = 255 * Hue_2_RGB(val1, val2, h - ( 1 / 3 ));
     }
 
-    return dpTypes.color(r, g, b);
+    return dp.rgba(r, g, b);
   }
 
   static colorTemperatureToRgb(value) {
@@ -1099,780 +979,728 @@ class dpColor  {
       b = (138.5177312231 * Math.log(value - 10) - 305.0447927307).toFixed(0);
     }
 
-    return dpTypes.color(r, g, b);
+    return dp.rgba(r, g, b);
   }
 
 }
 
 
 
-( function( window ) {
-  
-  function dpImageProcessing(callback = null) {
-    this.init(callback);
-  }
+function dpImageProcessing(callback = null) {
+  this.init(callback);
+}
 
-  dpImageProcessing.prototype = {
+dpImageProcessing.prototype = {
 
-    kelvinTable : null,
-    dpCtx : null,
+  kelvinTable : null,
+  dpCtx : null,
 
-    init : function (callback) { 
-      this.dpCtx = new dpCanvas2dCtx();
-      this.kelvinTable = dpColor.getKelvinTable();
-      if (typeof callback == 'function') {
-        this.onLoad(callback);
-      }
-    },
+  init : function (callback) { 
+    this.dpCtx = new dpCanvas2dCtx();
 
-    onLoad : function(callback) { 
-      this.dpCtx.onLoad(callback);
-    },
+    this.kelvinTable = {
+      1000: [255, 56, 0],
+      1500: [255, 109, 0],
+      1900: [255, 131, 0],
+      2000: [255, 137, 18],
+      2200: [255, 147, 44],
+      2500: [255, 161, 72],
+      2700: [255, 169, 87],
+      2800: [255, 173, 94],
+      2900: [255, 177, 101],
+      3000: [255, 180, 107],
+      3500: [255, 196, 137],
+      4000: [255, 209, 163],
+      4100: [255, 211, 168],
+      4300: [255, 215, 177],
+      4500: [255, 219, 186],
+      5000: [255, 228, 206],
+      5100: [255, 230, 210],
+      5200: [255, 232, 213],
+      5300: [255, 233, 217],
+      5400: [255, 235, 220],
+      5500: [255, 236, 224],
+      5600: [255, 238, 227],
+      5700: [255, 239, 230],
+      6000: [255, 243, 239],
+      6500: [255, 249, 253],
+      6600: [254, 249, 255],
+      6700: [252, 247, 255],
+      6800: [249, 246, 255],
+      6900: [247, 245, 255],
+      7000: [245, 243, 255],
+      7100: [243, 242, 255],
+      7200: [240, 241, 255],
+      7300: [239, 240, 255],
+      7400: [237, 239, 255],
+      7500: [235, 238, 255],
+      8000: [227, 233, 255],
+      8500: [220, 229, 255],
+      9000: [214, 225, 255],
+      9300: [210, 223, 255],
+      9500: [208, 222, 255],
+      9600: [207, 221, 255],
+      9700: [207, 221, 255],
+      9800: [206, 220, 255],
+      9900: [205, 220, 255],
+      10000: [204, 219, 255],
+      10500: [200, 217, 255],
+      11000: [200, 213, 255],
+      11500: [193, 213, 255],
+      12000: [191, 211, 255],
+      12500: [188, 210, 255],
+      13000: [186, 208, 255],
+      13500: [184, 207, 255],
+      14000: [182, 206, 255],
+      14500: [180, 205, 255],
+      15000: [179, 204, 255],
+      15500: [177, 203, 255],
+      16000: [176, 202, 255],
+      16500: [175, 201, 255],
+      17000: [174, 200, 255],
+      17500: [173, 200, 255],
+    }
 
-    loadImage : function(e, type='event') {
-      this.dpCtx.loadImage(e, type);
-    },
+    Object.freeze(this.kelvinTable);
 
-    getImg : function() {
-      return this.dpCtx.getImageUrl();
-    },
+    if (typeof callback == 'function') {
+      this.onLoad(callback);
+    }
+  },
 
-    getOrgImg : function() {
-      return this.dpCtx.getOriginalImageUrl();
-    },
+  onLoad : function(callback) { 
+    this.dpCtx.onLoad(callback);
+  },
 
-    reset : function() {
-      this.dpCtx.reset();
-    },
+  loadImage : function(e, type='event') {
+    this.dpCtx.loadImage(e, type);
+  },
 
-    convolution : function (imgData, operationMatrix) {
-      if ( !(imgData instanceof ImageData) ) {
-        console.error('imgData param is required to an instance of ImageData');
-        return null;
-      }
+  getImg : function() {
+    return this.dpCtx.getImageUrl();
+  },
 
-      if ( imgData.data.length <= 0) return new ImageData(0, 0);
+  getOrgImg : function() {
+    return this.dpCtx.getOriginalImageUrl();
+  },
 
-      let side = Math.round(Math.sqrt(operationMatrix.length));
-      let halfSide = Math.floor(side / 2);
-      let canvasWidth = imgData.width;
-      let canvasHeight = imgData.height;
-      let outputData = new ImageData(canvasWidth, canvasHeight);
-      
-      for (let h = 0; h < canvasHeight; h++) {
-        for (let w = 0; w < canvasWidth; w++) {
+  reset : function() {
+    this.dpCtx.reset();
+  },
 
-          let position = (h * canvasWidth + w) * 4;
-          let sumR = 0, sumG = 0, sumB = 0;
+  convolution : function (imgData, operationMatrix) {
+    if ( !(imgData instanceof ImageData) ) {
+      console.error('imgData param is required to an instance of ImageData');
+      return null;
+    }
 
-          for (let matH = 0; matH < side; matH++) {
-            for (let matW = 0; matW < side; matW++) {
-              
-              let currentMatH = h + matH - halfSide;
-              let currentMatW = w + matW - halfSide;
+    if ( imgData.data.length <= 0) return new ImageData(0, 0);
 
-              while ( currentMatH < 0 ) {
-                currentMatH += 1;
-              };
-
-              while ( currentMatH >= canvasHeight ) {
-                currentMatH -= 1;
-              };
-
-              while ( currentMatW < 0 ) {
-                currentMatW += 1;
-              };
-
-              while ( currentMatW >= canvasWidth ) {
-                currentMatW -= 1;
-              };
-
-              let offset = (currentMatH * canvasWidth + currentMatW) * 4;
-              let operation = operationMatrix[matH * side + matW];
-
-              sumR += imgData.data[offset] * operation;
-              sumG += imgData.data[offset + 1] * operation;
-              sumB += imgData.data[offset + 2] * operation;
-            }
-          }
-
-          outputData.data[position] = dpTypes.byte(sumR);
-          outputData.data[position + 1] = dpTypes.byte(sumG);
-          outputData.data[position + 2] = dpTypes.byte(sumB);
-          outputData.data[position + 3] = imgData.data[position + 3];
-        }
-      }
-
-      return outputData; 
-    },
-
-    histogram : function() {
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-      
-      let output = {
-        r : [],
-        g : [],
-        b : [],
-      }
-
-      for (var i = 0; i < 256; i += 1) {
-        output.r[i] = 0;
-        output.g[i] = 0;
-        output.b[i] = 0;
-      }
-      
-      for (var i = 0; i < data.length; i += 4) {
-        output.r[data[i]] += 1;
-        output.g[data[i+1]] += 1;
-        output.b[data[i+2]] += 1;
-      }
-      
-      return output;
-    },
-
-    asyncHistogram : async function() {
-      let promise = new Promise(resolve => { resolve(this.histogram()); });
-
-      return await promise;
-    },
-
-
-
-    flipImage : async function(flipH, flipV) {
-      var scaleH = flipH ? -1 : 1;
-      var scaleV = flipV ? -1 : 1;
-
-      this.dpCtx.ctxActive.save();
-
-      if(flipH) { this.dpCtx.ctxActive.translate(this.dpCtx.getWidth(), 0); }
-      if(flipV) { this.dpCtx.ctxActive.translate(0, this.dpCtx.getHeight()); } 
-
-      this.dpCtx.ctxActive.scale(scaleH, scaleV);
-      this.dpCtx.ctxActive.drawImage(this.dpCtx.getCanvas(), 0, 0);
-      this.dpCtx.ctxActive.setTransform(1,0,0,1,0,0);
-      this.dpCtx.ctxActive.restore();
-
-      return await new Promise(resolve => { resolve(true); });
-    },
-
-    rotateImage : async function(clockwise) {
-      let bmp = await createImageBitmap(this.dpCtx.getImageData());
-
-      const degrees = clockwise == true ? 90 : -90;
-      const iw = this.dpCtx.getWidth();
-      const ih = this.dpCtx.getHeight();
-
-      this.dpCtx.ctxActive.canvas.width = ih;
-      this.dpCtx.ctxActive.canvas.height = iw;
-
-      if(clockwise) {
-        this.dpCtx.ctxActive.translate(ih, 0);
-      } else {
-        this.dpCtx.ctxActive.translate(0, iw);
-      }
-
-      this.dpCtx.ctxActive.rotate(degrees*Math.PI/180);
-      this.dpCtx.ctxActive.drawImage(bmp, 0 , 0);
-      this.dpCtx.ctxActive.setTransform(1,0,0,1,0,0);
-
-      return await new Promise(resolve => { resolve(true); });
-    },
-
-
-
-    colorFilter : function(type) {
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (var i = 0; i < data.length; i += 4) {
-        if (type === 'R') {
-          data[i];
-          data[i + 1] = 0;
-          data[i + 2] = 0;
-          continue;
-        }
-        if (type === 'G') {
-          data[i] = 0;
-          data[i + 1];
-          data[i + 2] = 0;
-          continue;
-        }
-        if (type === 'B') {
-          data[i] = 0;
-          data[i + 1] = 0;
-          data[i + 2];
-          continue;
-        }
-        if (type === 'C') {
-          data[i] = 0;
-          data[i + 1];
-          data[i + 2];
-          continue;
-        }
-        if (type === 'M') {
-          data[i];
-          data[i + 1] = 0;
-          data[i + 2];
-          continue;
-        }
-        if (type === 'Y') {
-          data[i];
-          data[i + 1];
-          data[i + 2] = 0;
-          continue;
-        }
-      }
-      
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncColorFilter : async function(type) {
-      let promise = new Promise(resolve => {
-        const res = this.colorFilter(type);
-        resolve(res);
-      });
-
-      return await promise;
-    },
-
-    invert : function() {
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = 255 - data[i];  
-        data[i + 1] = 255 - data[i + 1];
-        data[i + 2] = 255 - data[i + 2];
-      }
-      
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncInvert : async function() {
-      let promise = new Promise(resolve => { resolve(this.invert()); });
-      return await promise;
-    },
-
-    grayscale : function(blackPass=0, whitePass=255) {
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (var i = 0; i < data.length; i += 4) {
-
-        var avg = (data[i]*0.3) + (data[i + 1]*0.59) + (data[i + 2]*0.11);
-
-        if(avg < blackPass) { avg = 0; }
-        else if(avg > whitePass) { avg = 255; }
-
-        data[i] = avg;
-        data[i + 1] = avg;
-        data[i + 2] = avg;
-      }
-
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncGrayscale : async function(blackPass=0, whitePass=255) {
-      let promise = new Promise(resolve => { resolve(this.grayscale(blackPass, whitePass)); });
-      return await promise;
-    },
-
-    sepia : function() {
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (var i = 0; i < data.length; i += 4) {
-        let red = data[i], green = data[i + 1], blue = data[i + 2];
+    let side = Math.round(Math.sqrt(operationMatrix.length));
+    let halfSide = Math.floor(side / 2);
+    let canvasWidth = imgData.width;
+    let canvasHeight = imgData.height;
+    let outputData = new ImageData(canvasWidth, canvasHeight);
     
-        data[i] = dpTypes.byte(0.393 * red + 0.769 * green + 0.189 * blue);
-        data[i + 1] = dpTypes.byte(0.349 * red + 0.686 * green + 0.168 * blue);
-        data[i + 2] = dpTypes.byte(0.272 * red + 0.534 * green + 0.131 * blue);
-      }
-
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncSepia : async function() {
-      let promise = new Promise(resolve => {
-        const res = this.sepia();
-        resolve(res);
-      });
-
-      return await promise;
-    },
-
-    gamma : function(value) {
-      try {
-        value = parseFloat(parseFloat(value).toFixed(4));
-      } catch(error) {
-        console.error(`Value: ${value} cant be parsed to float.`, error)
-        return;
-      }
-
-      if (value < 0) { value = 0; }
-      if (value > 100) { value = 100.0; }
-
-      let gammaCorrection = 1 / value;
-
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (var i = 0; i < data.length; i += 4) {
-        data[i] = dpTypes.byte(255 * Math.pow((data[i] / 255), gammaCorrection));
-        data[i+1] = dpTypes.byte(255 * Math.pow((data[i+1] / 255), gammaCorrection));
-        data[i+2] = dpTypes.byte(255 * Math.pow((data[i+2] / 255), gammaCorrection));
-      }
-
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncGamma : async function(value) {
-      let promise = new Promise(resolve => {
-        const res = this.gamma(value);
-        resolve(res);
-      });
-
-      return await promise;
-    },
-
-    transparency : function(value) {
-      try {
-        value = parseFloat(value);
-      } catch(error) {
-        console.error(`Value: ${value} cant be parsed to float.`, error)
-        return;
-      }
-
-      if (value < 0) { value = 0; }
-      if (value > 100) { value = 100; }
-
-      value = value / 100;
-
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (var i = 0; i < data.length; i += 4) {
-        data[i+3] = dpTypes.byte(data[i+3] * value);
-      }
-
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncTransparency : async function(value) {
-      let promise = new Promise(resolve => {
-        const res = this.transparency(value);
-        resolve(res);
-      });
-
-      return await promise;
-    },
-
-    temperature : function(value) {
-      try {
-        value = parseInt(value);
-      } catch(error) {
-        console.error(`Value: ${value} cant be parsed to int.`, error)
-        return;
-      }
-
-      if (value <= 0) { return false; }
-
-      let color = this.kelvinTable[value];
-
-      if (!color) { 
-        let gen = dpColor.colorTemperatureToRgb(value);
-        color = [];
-        color[0] = gen.r;
-        color[1] = gen.g;
-        color[2] = gen.b;
-      }
-
-      let r = color[0] / 255;
-      let g = color[1] / 255;
-      let b = color[2] / 255;
-
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (var i = 0; i < data.length; i += 4) {
-        data[i] = dpTypes.byte(data[i] * r);
-        data[i+1] = dpTypes.byte(data[i+1] * g);
-        data[i+2] = dpTypes.byte(data[i+2] * b);
-      }
-
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncTemperature : async function(value) {
-      let promise = new Promise(resolve => {
-        const res = this.temperature(value);
-        resolve(res);
-      });
-
-      return await promise;
-    },
-
-    noise : function(value) {
-      try {
-        value = parseFloat(value);
-      } catch(error) {
-        console.error(`Value: ${value} cant be parsed to int.`, error)
-        return;
-      }
-
-      if (value <= 0) value = 0;
-      if (value >= 10000) value = 10000;
-
-      const level = value * 255 * 0.1
-
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (var i = 0; i < data.length; i += 4) {
-        let random = (0.5 - Math.random()) * level;
-
-        data[i] += dpTypes.byte(random);
-        data[i+1] += dpTypes.byte(random);
-        data[i+2] += dpTypes.byte(random);
-      }
-
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncNoise : async function(value) {
-      let promise = new Promise(resolve => { resolve(this.noise(value)); });
-
-      return await promise;
-    },
-
-    hue : function(value) {
-      try {
-        value = parseFloat(value);
-      } catch(error) {
-        console.error(`Value: ${value} cant be parsed to float.`, error)
-        return;
-      }
-
-      if (value > 180) { value = 180; }
-      if (value < -180) { value = -180; }
-
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (var i = 0; i < data.length; i += 4) {
-        let hsl = dpColor.rgbToHSL(data[i], data[i+1], data[i+2]);
-
-        hsl.h = hsl.h + ( value / 360.0 );
-
-        let rgb = dpColor.hslToRGB(hsl.h, hsl.s, hsl.l);
-
-        data[i] = rgb.r;
-        data[i+1] = rgb.g;
-        data[i+2] = rgb.b;
-      }
-
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncHue : async function(value) {
-      let promise = new Promise(resolve => { resolve(this.hue(value)); });
-
-      return await promise;
-    },
-
-    saturation : function(value) {
-      try {
-        value = parseFloat(value);
-      } catch(error) {
-        console.error(`Value: ${value} cant be parsed to float.`, error)
-        return;
-      }
-
-      if (value > 100) { value = 100; }
-      if (value < -100) { value = -100; }
-
-      value = (100.0 + value) / 100.0;
-      value *= value;
-
-      let luR = 0.3086;
-      let luG = 0.6094;
-      let luB = 0.0820;
-
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (var i = 0; i < data.length; i += 4) {
-        let red = data[i], green = data[i + 1], blue = data[i + 2];
-
-        data[i] = dpTypes.byte(
-          ( ((1 - value)*luR + value)*red + ((1 - value)*luG)*green + ((1 - value)*luB)*blue )
-        );
-        
-        data[i+1] = dpTypes.byte(
-          ( ((1 - value)*luR)*red + ((1 - value)*luG + value)*green + ((1 - value)*luB)*blue )
-        );
-
-        data[i+2] = dpTypes.byte(
-          ( ((1 - value)*luR)*red + ((1 - value)*luG)*green + ((1 - value)*luB + value)*blue )
-        );
-      }
-
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncSaturation : async function(value) {
-      let promise = new Promise(resolve => {
-        const res = this.saturation(value);
-        resolve(res);
-      });
-
-      return await promise;
-    },
-
-    lightness : function(value) {
-      try {
-        value = parseInt(value);
-      } catch(error) {
-        console.error(`Value: ${value} cant be parsed to int.`, error)
-        return;
-      }
-
-      if (value > 100) { value = 100; }
-      if (value < -100) { value = -100; }
-
-      value = 2.55 * value;
-
-      let imgData = this.dpCtx.getImageData();
-      let data = imgData.data;
-
-      for (var i = 0; i < data.length; i += 4) {
-        data[i] = dpTypes.byte(data[i] + value);
-        data[i+1] = dpTypes.byte(data[i+1] + value);
-        data[i+2] = dpTypes.byte(data[i+2] + value);
-      }
-
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
-
-      return true;
-    },
-
-    asyncLightness : async function(value) {
-      let promise = new Promise(resolve => {
-        const res = this.lightness(value);
-        resolve(res);
-      });
-
-      return await promise;
-    },
-
-
-
-    lowpass : function(type = 0) {
-      let operator = [];
-
-      switch(type) {
-        case 1: {
-          const k = 1/10;
-          const c = 2/10;
-          operator = [
-            k, k, k,
-            k, c, k,
-            k, k, k,
-          ];
-          break;
+    for (let h = 0; h < canvasHeight; h++) {
+      for (let w = 0; w < canvasWidth; w++) {
+
+        let position = (h * canvasWidth + w) * 4;
+        let sumR = 0, sumG = 0, sumB = 0;
+
+        for (let matH = 0; matH < side; matH++) {
+          for (let matW = 0; matW < side; matW++) {
+            
+            let currentMatH = h + matH - halfSide;
+            let currentMatW = w + matW - halfSide;
+
+            while ( currentMatH < 0 ) {
+              currentMatH += 1;
+            };
+
+            while ( currentMatH >= canvasHeight ) {
+              currentMatH -= 1;
+            };
+
+            while ( currentMatW < 0 ) {
+              currentMatW += 1;
+            };
+
+            while ( currentMatW >= canvasWidth ) {
+              currentMatW -= 1;
+            };
+
+            let offset = (currentMatH * canvasWidth + currentMatW) * 4;
+            let operation = operationMatrix[matH * side + matW];
+
+            sumR += imgData.data[offset] * operation;
+            sumG += imgData.data[offset + 1] * operation;
+            sumB += imgData.data[offset + 2] * operation;
+          }
         }
-        case 2: {
-          operator = [
-            1/16, 2/16, 1/16, 
-            2/16, 4/16, 2/16, 
-            1/16, 2/16, 1/16,
-          ];
-          break;
-        }
-        case 3: {
-          operator = [
-            1/273, 4/273,  7/273,  4/273,  1/273,
-            4/273, 16/273, 26/273, 16/273, 4/273,
-            7/273, 26/273, 41/273, 26/273, 7/273,
-            4/273, 16/273, 26/273, 16/273, 4/273,
-            1/273, 4/273,  7/273,  4/273,  1/273,
-          ];
-          break;
-        }
-        default: {
-          const k = 1/9;
-          operator = [
-            k, k, k, 
-            k, k, k, 
-            k, k, k,
-          ];
-          break;
-        } 
+
+        outputData.data[position] = dp.byte(sumR);
+        outputData.data[position + 1] = dp.byte(sumG);
+        outputData.data[position + 2] = dp.byte(sumB);
+        outputData.data[position + 3] = imgData.data[position + 3];
       }
+    }
 
-      let imgData = this.convolution(this.dpCtx.getImageData(), operator);
+    return outputData; 
+  },
 
-      if ( !imgData ) return false;
+  histogram : function() {
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+    
+    let output = {
+      r : [],
+      g : [],
+      b : [],
+    }
 
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+    for (var i = 0; i < 256; i += 1) {
+      output.r[i] = 0;
+      output.g[i] = 0;
+      output.b[i] = 0;
+    }
+    
+    for (var i = 0; i < data.length; i += 4) {
+      output.r[data[i]] += 1;
+      output.g[data[i+1]] += 1;
+      output.b[data[i+2]] += 1;
+    }
+    
+    return output;
+  },
 
-      return true;
-    },
 
-    asyncLowpass : async function(type = 0) {
-      let promise = new Promise(resolve => { resolve(this.lowpass(type)); });
 
-      return await promise;
-    },
+  flipImage : function(flipH, flipV) {
+    var scaleH = flipH ? -1 : 1;
+    var scaleV = flipV ? -1 : 1;
 
-    highpass : function(type = 0) {
-      let operator = [];
+    this.dpCtx.ctxActive.save();
 
-      switch(type) {
-        case 1: {
-          operator = [
-            0, -1, 0,
-            -1, 5, -1,
-            0, -1, 0,
-          ];
-          break;
-        }
-        case 2: {
-          operator = [
-            1, -2, 1,
-            -2, 5, -2,
-            1, -2, 1,
-          ];
-          break;
-        }
-        case 3: {
-          operator = [
-            -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1,
-            -1, -1, 25, -1, -1,
-            -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1,
-          ];
-          break;
-        }
-        default: {
-          operator = [
-            -1, -1, -1,
-            -1, 9, -1,
-            -1, -1, -1,
-          ];
-          break;
-        } 
+    if(flipH) { this.dpCtx.ctxActive.translate(this.dpCtx.getWidth(), 0); }
+    if(flipV) { this.dpCtx.ctxActive.translate(0, this.dpCtx.getHeight()); } 
+
+    this.dpCtx.ctxActive.scale(scaleH, scaleV);
+    this.dpCtx.ctxActive.drawImage(this.dpCtx.getCanvas(), 0, 0);
+    this.dpCtx.ctxActive.setTransform(1,0,0,1,0,0);
+    this.dpCtx.ctxActive.restore();
+
+    return true;
+  },
+
+  rotateImage : function(clockwise) {
+    let org = document.createElement('canvas').getContext('2d');
+    org.canvas.width = this.dpCtx.ctxActive.canvas.width;
+    org.canvas.height = this.dpCtx.ctxActive.canvas.height;
+    org.putImageData(this.dpCtx.getImageData(), 0, 0);
+
+    const degrees = clockwise == true ? 90 : -90;
+    const iw = this.dpCtx.getWidth();
+    const ih = this.dpCtx.getHeight();
+
+    this.dpCtx.ctxActive.canvas.width = ih;
+    this.dpCtx.ctxActive.canvas.height = iw;
+
+    if(clockwise) {
+      this.dpCtx.ctxActive.translate(ih, 0);
+    } else {
+      this.dpCtx.ctxActive.translate(0, iw);
+    }
+
+    this.dpCtx.ctxActive.rotate(degrees*Math.PI/180);
+    this.dpCtx.ctxActive.drawImage(org.canvas, 0 , 0);
+    this.dpCtx.ctxActive.setTransform(1,0,0,1,0,0);
+
+    return true;
+  },
+
+  colorFilter : function(type) {
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+
+    for (var i = 0; i < data.length; i += 4) {
+      if (type === 'R') {
+        data[i];
+        data[i + 1] = 0;
+        data[i + 2] = 0;
+        continue;
       }
+      if (type === 'G') {
+        data[i] = 0;
+        data[i + 1];
+        data[i + 2] = 0;
+        continue;
+      }
+      if (type === 'B') {
+        data[i] = 0;
+        data[i + 1] = 0;
+        data[i + 2];
+        continue;
+      }
+      if (type === 'C') {
+        data[i] = 0;
+        data[i + 1];
+        data[i + 2];
+        continue;
+      }
+      if (type === 'M') {
+        data[i];
+        data[i + 1] = 0;
+        data[i + 2];
+        continue;
+      }
+      if (type === 'Y') {
+        data[i];
+        data[i + 1];
+        data[i + 2] = 0;
+        continue;
+      }
+    }
+    
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
-      let imgData = this.convolution(this.dpCtx.getImageData(), operator);
+    return true;
+  },
 
-      if ( !imgData ) return false;
+  invert : function() {
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = 255 - data[i];  
+      data[i + 1] = 255 - data[i + 1];
+      data[i + 2] = 255 - data[i + 2];
+    }
+    
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  grayscale : function(blackPass=0, whitePass=255) {
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+
+    for (var i = 0; i < data.length; i += 4) {
+
+      var avg = (data[i]*0.3) + (data[i + 1]*0.59) + (data[i + 2]*0.11);
+
+      if(avg < blackPass) { avg = 0; }
+      else if(avg > whitePass) { avg = 255; }
+
+      data[i] = avg;
+      data[i + 1] = avg;
+      data[i + 2] = avg;
+    }
+
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  sepia : function() {
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+
+    for (var i = 0; i < data.length; i += 4) {
+      let red = data[i], green = data[i + 1], blue = data[i + 2];
+  
+      data[i] = dp.byte(0.393 * red + 0.769 * green + 0.189 * blue);
+      data[i + 1] = dp.byte(0.349 * red + 0.686 * green + 0.168 * blue);
+      data[i + 2] = dp.byte(0.272 * red + 0.534 * green + 0.131 * blue);
+    }
+
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  gamma : function(value) {
+    try {
+      value = parseFloat(parseFloat(value).toFixed(4));
+    } catch(error) {
+      console.error(`Value: ${value} cant be parsed to float.`, error)
+      return;
+    }
+
+    if (value < 0) { value = 0; }
+    if (value > 100) { value = 100.0; }
+
+    let gammaCorrection = 1 / value;
+
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+
+    for (var i = 0; i < data.length; i += 4) {
+      data[i] = dp.byte(255 * Math.pow((data[i] / 255), gammaCorrection));
+      data[i+1] = dp.byte(255 * Math.pow((data[i+1] / 255), gammaCorrection));
+      data[i+2] = dp.byte(255 * Math.pow((data[i+2] / 255), gammaCorrection));
+    }
+
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  transparency : function(value) {
+    try {
+      value = parseFloat(value);
+    } catch(error) {
+      console.error(`Value: ${value} cant be parsed to float.`, error)
+      return;
+    }
+
+    if (value < 0) { value = 0; }
+    if (value > 100) { value = 100; }
+
+    value = value / 100;
+
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+
+    for (var i = 0; i < data.length; i += 4) {
+      data[i+3] = dp.byte(data[i+3] * value);
+    }
+
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  temperature : function(value) {
+    try {
+      value = parseInt(value);
+    } catch(error) {
+      console.error(`Value: ${value} cant be parsed to int.`, error)
+      return;
+    }
+
+    if (value <= 0) { return false; }
+
+    let color = this.kelvinTable[value];
+
+    if (!color) { 
+      let gen = dpColor.colorTemperatureToRgb(value);
+      color = [];
+      color[0] = gen.r;
+      color[1] = gen.g;
+      color[2] = gen.b;
+    }
+
+    let r = color[0] / 255;
+    let g = color[1] / 255;
+    let b = color[2] / 255;
+
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+
+    for (var i = 0; i < data.length; i += 4) {
+      data[i] = dp.byte(data[i] * r);
+      data[i+1] = dp.byte(data[i+1] * g);
+      data[i+2] = dp.byte(data[i+2] * b);
+    }
+
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  noise : function(value) {
+    try {
+      value = parseFloat(value);
+    } catch(error) {
+      console.error(`Value: ${value} cant be parsed to int.`, error)
+      return;
+    }
+
+    if (value <= 0) value = 0;
+    if (value >= 10000) value = 10000;
+
+    const level = value * 255 * 0.1
+
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+
+    for (var i = 0; i < data.length; i += 4) {
+      let random = (0.5 - Math.random()) * level;
+
+      data[i] += dp.byte(random);
+      data[i+1] += dp.byte(random);
+      data[i+2] += dp.byte(random);
+    }
+
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  hue : function(value) {
+    try {
+      value = parseFloat(value);
+    } catch(error) {
+      console.error(`Value: ${value} cant be parsed to float.`, error)
+      return;
+    }
+
+    if (value > 180) { value = 180; }
+    if (value < -180) { value = -180; }
+
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+
+    for (var i = 0; i < data.length; i += 4) {
+      let hsl = dpColor.rgbToHSL(data[i], data[i+1], data[i+2]);
+
+      hsl.h = hsl.h + ( value / 360.0 );
+
+      let rgb = dpColor.hslToRGB(hsl.h, hsl.s, hsl.l);
+
+      data[i] = rgb.r;
+      data[i+1] = rgb.g;
+      data[i+2] = rgb.b;
+    }
+
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  saturation : function(value) {
+    try {
+      value = parseFloat(value);
+    } catch(error) {
+      console.error(`Value: ${value} cant be parsed to float.`, error)
+      return;
+    }
+
+    if (value > 100) { value = 100; }
+    if (value < -100) { value = -100; }
+
+    value = (100.0 + value) / 100.0;
+    value *= value;
+
+    let luR = 0.3086;
+    let luG = 0.6094;
+    let luB = 0.0820;
+
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
+
+    for (var i = 0; i < data.length; i += 4) {
+      let red = data[i], green = data[i + 1], blue = data[i + 2];
+
+      data[i] = dp.byte(
+        ( ((1 - value)*luR + value)*red + ((1 - value)*luG)*green + ((1 - value)*luB)*blue )
+      );
       
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+      data[i+1] = dp.byte(
+        ( ((1 - value)*luR)*red + ((1 - value)*luG + value)*green + ((1 - value)*luB)*blue )
+      );
 
-      return true;
-    },
+      data[i+2] = dp.byte(
+        ( ((1 - value)*luR)*red + ((1 - value)*luG)*green + ((1 - value)*luB + value)*blue )
+      );
+    }
 
-    asyncHighpass : async function(type = 0) {
-      let promise = new Promise(resolve => { resolve(this.highpass(type)); });
-      return await promise;
-    },
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
-    sharpen : function() {
-      let operator = [
-        0, -0.2, 0, 
-        -0.2, 1.8, -0.2, 
-        0, -0.2, 0
-      ];
+    return true;
+  },
 
-      let imgData = this.convolution(this.dpCtx.getImageData(), operator);
+  lightness : function(value) {
+    try {
+      value = parseInt(value);
+    } catch(error) {
+      console.error(`Value: ${value} cant be parsed to int.`, error)
+      return;
+    }
 
-      if (!imgData) return false;
+    if (value > 100) { value = 100; }
+    if (value < -100) { value = -100; }
 
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+    value = 2.55 * value;
 
-      return true;
-    },
+    let imgData = this.dpCtx.getImageData();
+    let data = imgData.data;
 
-    asyncSharpen : async function() {
-      let promise = new Promise(resolve => { resolve(this.sharpen()); });
-      return await promise;
-    },
+    for (var i = 0; i < data.length; i += 4) {
+      data[i] = dp.byte(data[i] + value);
+      data[i+1] = dp.byte(data[i+1] + value);
+      data[i+2] = dp.byte(data[i+2] + value);
+    }
 
-    gaussian : function(type = 0) {
-      let operator = [];
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
-      switch(type) {
-        case 1: {
-          operator = [
-            1/52, 1/52, 2/52, 1/52, 1/52,
-            1/52, 2/52, 4/52, 2/52, 1/52,
-            2/52, 4/52, 8/52, 4/52, 2/52,
-            1/52, 2/52, 4/52, 2/52, 1/52,
-            1/52, 1/52, 2/52, 1/52, 1/52,
-          ];
-          break;
-        }
-        case 2: {
-          operator = [
-            1/140, 1/140, 2/140, 2/140, 2/140, 1/140, 1/140,
-            1/140, 2/140, 2/140, 4/140, 2/140, 2/140, 1/140,
-            2/140, 2/140, 4/140, 8/140, 4/140, 2/140, 2/140,
-            2/140, 4/140, 8/140, 16/140, 8/140, 4/140, 2/140,
-            2/140, 2/140, 4/140, 8/140, 4/140, 2/140, 2/140,
-            1/140, 2/140, 2/140, 4/140, 2/140, 2/140, 1/140,
-            1/140, 1/140, 2/140, 2/140, 2/140, 1/140, 1/140,
-          ];
-          break;
-        }
-        default: {
-          operator = [
-            1/16, 2/16, 1/16,
-            2/16, 4/16, 2/16,
-            1/16, 2/16, 1/16,
-          ];
-          break;
-        } 
+    return true;
+  },
+
+
+
+  lowpass : function(type = 0) {
+    let operator = [];
+
+    switch(type) {
+      case 1: {
+        const k = 1/10;
+        const c = 2/10;
+        operator = [
+          k, k, k,
+          k, c, k,
+          k, k, k,
+        ];
+        break;
       }
+      case 2: {
+        operator = [
+          1/16, 2/16, 1/16, 
+          2/16, 4/16, 2/16, 
+          1/16, 2/16, 1/16,
+        ];
+        break;
+      }
+      case 3: {
+        operator = [
+          1/273, 4/273,  7/273,  4/273,  1/273,
+          4/273, 16/273, 26/273, 16/273, 4/273,
+          7/273, 26/273, 41/273, 26/273, 7/273,
+          4/273, 16/273, 26/273, 16/273, 4/273,
+          1/273, 4/273,  7/273,  4/273,  1/273,
+        ];
+        break;
+      }
+      default: {
+        const k = 1/9;
+        operator = [
+          k, k, k, 
+          k, k, k, 
+          k, k, k,
+        ];
+        break;
+      } 
+    }
 
-      let imgData = this.convolution(this.dpCtx.getImageData(), operator);
+    let imgData = this.convolution(this.dpCtx.getImageData(), operator);
 
-      if (!imgData) return false;
+    if ( !imgData ) return false;
 
-      this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
-      return true;
-    },
+    return true;
+  },
 
-    asyncGaussian : async function(type = 0) {
-      let promise = new Promise(resolve => { resolve(this.gaussian(type)); });
-      return await promise;
-    },
+  highpass : function(type = 0) {
+    let operator = [];
 
-  }
+    switch(type) {
+      case 1: {
+        operator = [
+          0, -1, 0,
+          -1, 5, -1,
+          0, -1, 0,
+        ];
+        break;
+      }
+      case 2: {
+        operator = [
+          1, -2, 1,
+          -2, 5, -2,
+          1, -2, 1,
+        ];
+        break;
+      }
+      case 3: {
+        operator = [
+          -1, -1, -1, -1, -1,
+          -1, -1, -1, -1, -1,
+          -1, -1, 25, -1, -1,
+          -1, -1, -1, -1, -1,
+          -1, -1, -1, -1, -1,
+        ];
+        break;
+      }
+      default: {
+        operator = [
+          -1, -1, -1,
+          -1, 9, -1,
+          -1, -1, -1,
+        ];
+        break;
+      } 
+    }
 
-	window.dpImageProcessing = dpImageProcessing;
+    let imgData = this.convolution(this.dpCtx.getImageData(), operator);
 
-} )( window );
+    if ( !imgData ) return false;
+    
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  sharpen : function() {
+    let operator = [
+      0, -0.2, 0, 
+      -0.2, 1.8, -0.2, 
+      0, -0.2, 0
+    ];
+
+    let imgData = this.convolution(this.dpCtx.getImageData(), operator);
+
+    if (!imgData) return false;
+
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  gaussian : function(type = 0) {
+    let operator = [];
+
+    switch(type) {
+      case 1: {
+        operator = [
+          1/52, 1/52, 2/52, 1/52, 1/52,
+          1/52, 2/52, 4/52, 2/52, 1/52,
+          2/52, 4/52, 8/52, 4/52, 2/52,
+          1/52, 2/52, 4/52, 2/52, 1/52,
+          1/52, 1/52, 2/52, 1/52, 1/52,
+        ];
+        break;
+      }
+      case 2: {
+        operator = [
+          1/140, 1/140, 2/140, 2/140, 2/140, 1/140, 1/140,
+          1/140, 2/140, 2/140, 4/140, 2/140, 2/140, 1/140,
+          2/140, 2/140, 4/140, 8/140, 4/140, 2/140, 2/140,
+          2/140, 4/140, 8/140, 16/140, 8/140, 4/140, 2/140,
+          2/140, 2/140, 4/140, 8/140, 4/140, 2/140, 2/140,
+          1/140, 2/140, 2/140, 4/140, 2/140, 2/140, 1/140,
+          1/140, 1/140, 2/140, 2/140, 2/140, 1/140, 1/140,
+        ];
+        break;
+      }
+      default: {
+        operator = [
+          1/16, 2/16, 1/16,
+          2/16, 4/16, 2/16,
+          1/16, 2/16, 1/16,
+        ];
+        break;
+      } 
+    }
+
+    let imgData = this.convolution(this.dpCtx.getImageData(), operator);
+
+    if (!imgData) return false;
+
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+}

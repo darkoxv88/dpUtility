@@ -37,13 +37,11 @@
 dpVerifyES6(true);
 
 class Engine extends dp3dEngine {
-
   loadView(ele) {
     let view = dp.$('<app-display>')[0];
     view.innerHTML = '';
     view.append(ele);
   }
-
 }
 
 let index = {
@@ -57,17 +55,17 @@ let index = {
       <img id="test-img" style="margin: 6px;" width="400px" height="auto"></img>
     `;
 
-    this.test = new dpImageProcessing(async () => {
-      await this.test.asyncTemperature(6200);
-      await this.test.asyncLightness(7);
-      await this.test.asyncGamma(1.15)
-      await this.test.asyncHue(38)
-      await this.test.flipImage(true, false);
-      await this.test.rotateImage(true);
-      await this.test.asyncSaturation(-3);
-      await this.test.asyncHighpass(3);
-      await this.test.asyncNoise(5);
-      console.log(await this.test.asyncHistogram());
+    this.test = new dpImageProcessing(() => {
+      this.test.temperature(6200);
+      this.test.lightness(7);
+      this.test.gamma(1.15)
+      this.test.hue(38)
+      this.test.flipImage(true, false);
+      this.test.rotateImage(true);
+      this.test.saturation(-3);
+      this.test.highpass(3);
+      this.test.noise(5);
+      console.log(this.test.histogram());
       dp.$("#org-img").src  = this.test.getOrgImg();
       dp.$("#test-img").src = this.test.getImg();
     });
