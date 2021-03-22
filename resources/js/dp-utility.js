@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.0.4
+  * @version 1.0.5
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,9 +34,9 @@
 
 "use strict";
 
-(function() {
+( function(window) {
   if (window.dp) window.dp = undefined;
-})()
+}) (window)
 
 /**	
   * @name dpVerifyES6
@@ -70,11 +70,11 @@ function dpVerifyES6(kill) {
 
   return output;
 }
-  
+
 var dpConst = {
   supportsES6 : dpVerifyES6(true),
   epsilon : 0.000001,
-  array : (typeof Float32Array !== 'undefined') ? Float32Array : Array,
+  floatArray : (typeof Float32Array !== 'undefined') ? Float32Array : Array,
 }
 
 Object.freeze(dpConst);
@@ -102,6 +102,7 @@ var dp = new function() {
     * @function
     * Performs 1D deserialization of GET query
     * @param {string} str
+    * @returns string
   **/
   this.deserialize = function(str) {
     let tempArray = {};
@@ -119,12 +120,13 @@ var dp = new function() {
     * @name $
     * @function
     * Gets DOMelement/s
-    * @param {string} str
+    * @param {string} value
     * If the string starts with '#' it will search by id attribute.
     * If the string starts with '.' it will search by class attribute.
     * If the string starts with '&' it will search by name attribute.
-    * If the string is in tag format '<div>' it will search all DOM elements as that tag.
+    * If the string is in HTML tag format '<>' it will search all DOM elements as that tag.
     * Everything else will use generic query selector.
+    * @returns HTMLElement | HTMLCollectionOf<Element> | NodeListOf<Element>
   **/
    this.$ = function(value) {
     if (typeof value != 'string' || !value) return null;
@@ -179,9 +181,19 @@ var dp = new function() {
     * @name main
     * @returns {void}
     * @function
+    * Handels the main call function
+  **/
+  this.main = function(mainFunc) {
+    if (typeof mainFunc == 'function') mainFunc();
+  }
+
+  /**
+    * @name onload
+    * @returns {void}
+    * @function
     * This function is called as the window.onload event
   **/
-  this.main = function(loadFunc) {
+  this.onload = function(loadFunc) {
     if (typeof loadFunc != 'function') return null;
 
     if (window.addEventListener) {
@@ -220,8 +232,8 @@ var dp = new function() {
     try {
       val = parseInt(val);
     } catch(error) {
-      console.error(`Value: ${val} cant be parsed to int.`, error);
-      return;
+      console.error('Value: ' + val + ' cant be parsed to int.' + ' --> ', error);
+      return 0;
     }
 
     if (val > 255) { return 255; }
@@ -254,12 +266,12 @@ var dp = new function() {
 
   this.maxCap = function(value, cap) {
     if (typeof(value) !== 'number') { 
-      console.error(`value: ${value} is not a number`);
-      return 0;
+      console.error('value: ' + value + ' is not a number');
+      return;
     }
     if (typeof(cap) !== 'number') { 
-      console.error(`cap: ${cap} is not a number`);
-      return 0;
+      console.error('cap: ' + cap + ' is not a number');
+      return;
     }
 
     if (value > cap) { value = cap; }
@@ -269,12 +281,12 @@ var dp = new function() {
   
   this.minCap = function(value, cap) {
     if (typeof(value) !== 'number') { 
-      console.error(`value: ${value} is not a number`);
-      return 0;
+      console.error('value: ' + value + ' is not a number');
+      return;
     }
     if (typeof(cap) !== 'number') { 
-      console.error(`cap: ${cap} is not a number`);
-      return 0;
+      console.error('cap: ' + cap + ' is not a number');
+      return;
     }
 
     if (value < cap) { value = cap; }
@@ -300,47 +312,151 @@ var dp = new function() {
 
 
 
-class dpVec3 {
+var dpVec2 = new function() {
 
-  static create(x, y, z) {
-    new Float32Array(x, y, z);
+  this._array = dpConst.floatArray;
+
+  this.empty = function() {
+    let out = new this._array(2);
+    out[0] = 0;
+    out[1] = 0;
+    return out;
   }
 
-  static add(v1, v2) {
-    return new Float32Array(v1[0]+v2[0], v1[1]+v2[1], v1[2]+v2[2]);
+  this.create = function(x, y) {
+    let out = new this._array(2);
+    out[0] = x;
+    out[1] = y;
+    return out;
   }
 
-  static sub(v1, v2) {
-    return new Float32Array(v1[0]-v2[0], v1[1]-v2[1], v1[2]-v2[2]);
+  this.clone = function(v) {
+    let out = new this._array(2);
+    out[0] = v[0];
+    out[1] = v[1];
+    return out;
   }
 
-  static mul(v1, v2) {
-    return new Float32Array(v1[0]*v2[0], v1[1]*v2[1], v1[2]*v2[2]);
+  this.add = function(v1, v2) {
+    return this.create(v1[0]+v2[0], v1[1]+v2[1]);
   }
 
-  static div(v1, v2) {
-    return new Float32Array(v1[0]/v2[0], v1[1]/v2[1], v1[2]/v2[2]);
+  this.sub = function(v1, v2) {
+    return this.create(v1[0]-v2[0], v1[1]-v2[1]);
   }
 
-  static dotProduct(v1, v2) {
+  this.mul = function(v1, v2) {
+    return this.create(v1[0]*v2[0], v1[1]*v2[1]);
+  }
+
+  this.div = function(v1, v2) {
+    return this.create(v1[0]/v2[0], v1[1]/v2[1]);
+  }
+
+  this.max = function(v1, v2) {
+    return this.create(Math.max(v1[0], v2[0]), Math.max(v1[1], v2[1]));
+  }
+
+  this.scale = function(v1, scale) {
+    return this.create(v1[0] * scale, v1[1] * scale); 
+  }
+
+  this.distance = function(v1, v2) {
+    let x = v2[0] - v1[0];
+    let y = v2[1] - v1[1];
+    return x*x + y*y;
+  }
+
+  this.distanceSqrt = function(v1, v2) {
+    return Math.sqrt(this.distance(v1, v2));
+  }
+
+  this.negate = function(v1) {
+    return this.create(0 - v1[0], 0 - v1[1]);;
+  }
+}
+
+
+
+var dpVec3 = new function() {
+
+  this._array = dpConst.floatArray;
+
+  this.empty = function() {
+    let out = new this._array(3);
+    out[0] = 0;
+    out[1] = 0;
+    out[2] = 0;
+    return out;
+  }
+
+  this.create = function(x, y, z) {
+    let out = this.empty(3);
+    out[0] = x;
+    out[1] = y;
+    out[2] = z;
+    return out;
+  }
+
+  this.clone = function(v) {
+    let out = this.empty(3);
+    out[0] = v[0];
+    out[1] = v[1];
+    out[2] = v[2];
+    return out;
+  }
+
+  this.add = function(v1, v2) {
+    return this.create(v1[0]+v2[0], v1[1]+v2[1], v1[2]+v2[2]);
+  }
+
+  this.sub = function(v1, v2) {
+    return this.create(v1[0]-v2[0], v1[1]-v2[1], v1[2]-v2[2]);
+  }
+
+  this.mul = function(v1, v2) {
+    return this.create(v1[0]*v2[0], v1[1]*v2[1], v1[2]*v2[2]);
+  }
+
+  this.div = function(v1, v2) {
+    return this.create(v1[0]/v2[0], v1[1]/v2[1], v1[2]/v2[2]);
+  }
+
+  this.scale = function(v1, scale) {
+    return this.create(v1[0] * scale, v1[1] * scale, v1[2] * scale); 
+  }
+
+  this.dotProduct = function(v1, v2) {
     return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
   }
 
-  static length(v) {
+  this.lenght = function(v) {
     return Math.sqrt(this.dotProduct(v, v));
   }
 
-  static normalise(v) {
-    const l = this.length(v)
-    return new Float32Array(v[0] / l, v[1] / l, v[2] / l);
+  this.normalise = function(v) {
+    const l = this.lenght(v)
+    return this.create(v[0] / l, v[1] / l, v[2] / l);
   }
 
-  static crossProduct(v1, v2) {
-    return new Float32Array(
+  this.crossProduct = function(v1, v2) {
+    return this.create(
       v1[1]*v2[2] - v1[2]*v2[1], 
       v1[2]*v2[0] - v1[0]*v2[2], 
       v1[0]*v2[1] - v1[1]*v2[0]
     );
+  }
+
+}
+
+
+
+var dpMat2x2 = new function() {
+
+  this._array = dpConst.floatArray;
+
+  this.empty = function() {
+    return new this._array(4);
   }
 
 }
@@ -353,201 +469,63 @@ class dpVec3 {
 
 
 
-( function( window ) {
-  
-  function dpSubject(value, sub = null) {
-    this.init(value, sub);
-  }
+/**
+  * @name dpSubject
+	* @class
+  * 
+  * 
+**/
+function dpSubject(value, sub = null) {
+  this.init(value, sub);
+  this.init = undefined;
+}
+dpSubject.prototype = {
 
-  dpSubject.prototype = {
+  value : null,
+  call : null,
 
-    value : null,
-    call : null,
+  init : function(value, sub) {
+    this.value = value;
+    this.subscribe(sub);
+  },
 
-    init : function(value, sub) {
-      this.value = value;
-      this.subscribe(sub);
-    },
+  subscribe : function(callback) { 
+    if (!callback) { return; }
 
-    subscribe : function(callback) { 
-      if (!callback) { return; }
-
-      if (typeof(callback) !== 'function') { 
-        console.error(`callback: ${callback} is not a function`);
-        return; 
-      }
-
-      this.call = callback;
-    },
-
-    unsubscribe : function() { 
-      this.call = null;
-    },
-
-    reset : function () {
-      this.value = null;
-      this.unsubscribe();
-    },
-
-    fireEvent : function() {
-      try {
-        if (typeof(this.call) !== 'function') { return; }
-        this.call(this.value);
-      } catch(err) { console.error(err); }
-    },
-
-    next : function(value) {
-      this.value = value;
-      this.fireEvent();
-    },
-
-    getValue : function() {
-      return this.value;
+    if (typeof(callback) !== 'function') { 
+      console.error(`callback: ${callback} is not a function`);
+      return; 
     }
 
-  }
+    this.call = callback;
+  },
 
-  window.dpSubject = dpSubject;
+  unsubscribe : function() { 
+    this.call = null;
+  },
 
-} )( window );
+  reset : function () {
+    this.value = null;
+    this.unsubscribe();
+  },
 
+  fireEvent : function() {
+    try {
+      if (typeof(this.call) !== 'function') { return; }
+      this.call(this.value);
+    } catch(err) { console.error(err); }
+  },
 
+  next : function(value) {
+    this.value = value;
+    this.fireEvent();
+  },
 
-( function( window ) {
-  
-  function dpCanvas2dCtx() {
-    this.init();
-  }
+  getValue : function() {
+    return this.value;
+  },
 
-  dpCanvas2dCtx.prototype = {
-
-    onLoadEvent : null,
-    file : null,
-    img: null,
-    imgData : {
-      iName : '',
-      iSize : 0,
-      iType : '',
-      src : '',
-      width : 0,
-      height : 0,
-    },
-    ctxOrg: null,
-    ctxActive: null,
-
-    init : function() { 
-      this.onLoadEvent = new dpSubject();
-    },
-
-    onLoad: function(callback) {
-      this.onLoadEvent.subscribe(callback);
-    },
-
-    loadImage : function(e, type='event') {
-      if (!e) { return; }
-
-      let files = null;
-
-      if (type === 'event') { 
-        files = e.target.files; 
-      } else if(type === 'file') {
-        files = e;
-      } else { return; }
-  
-      if (FileReader && files && files.length) {
-        this.imgData.iName = files[0].name;
-        this.imgData.iSize = files[0].size;
-        this.imgData.iType = files[0].type;
-
-        this.file = files[0];
-
-        let fr = new FileReader();
-        fr.onload = () => this.registerImage(fr.result);
-        fr.readAsDataURL(files[0]);
-      } else {
-        console.error('There was an unknown error. Check if FileReader is supported');
-      }
-    },
-
-    registerImage : function(src) {
-      let img = document.createElement('img');
-      img.onload = () => this.createCanvasCtxFromImage(img);
-      img.src = src;
-      this.imgData.src = src;
-      this.img = img;
-    },
-
-    createCanvasCtxFromImage : function(img) {
-      try {
-        let canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        this.imgData.width = img.width;
-        this.imgData.height = img.height;
-        let ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        this.ctxOrg = ctx;
-        this.ctxActive = this.duplicateCtxOrg();
-      } catch(error) {
-        console.error(error);
-        return;
-      }
-
-      this.onLoadEvent.next(null);
-    },
-
-    generate2dCtx : function(w = this.imgData.width, h = this.imgData.height) {
-      let newCanvas = document.createElement('canvas');
-      newCanvas.width = w;
-      newCanvas.height = h;
-      return  newCanvas.getContext('2d');
-    },
-
-    duplicateCtxOrg : function() {
-      let context = this.generate2dCtx(this.ctxOrg.canvas.width, this.ctxOrg.canvas.height)
-      context.drawImage(this.ctxOrg.canvas, 0, 0);
-      return context;
-    },
-
-    duplicateCtxActive : function() {
-      let context = this.generate2dCtx(this.ctxActive.canvas.width, this.ctxActive.canvas.height)
-      context.drawImage(this.ctxActive.canvas, 0, 0);
-      return context;
-    },
-
-    getImageUrl : function(mimeType = 'image/png') {
-      return this.ctxActive.canvas.toDataURL(mimeType);
-    },
-
-    getOriginalImageUrl : function(mimeType = 'image/png') {
-      return this.ctxOrg.canvas.toDataURL(mimeType);
-    },
-
-    reset : function() {
-      this.ctxActive = this.duplicateCtxOrg();
-    },
-
-    getWidth : function() {
-      return this.ctxActive.canvas.width;
-    },
-
-    getHeight : function() {
-      return this.ctxActive.canvas.height;
-    },
-
-    getCanvas : function() {
-      return this.ctxActive.canvas;
-    },
-
-    getImageData : function() {
-      return this.ctxActive.getImageData(0, 0, this.getWidth(), this.getHeight());
-    },
-
-  }
-	
-	window.dpCanvas2dCtx = dpCanvas2dCtx;
-
-} )( window );
+}
 
 
 
@@ -558,9 +536,16 @@ class dpVec3 {
 
 
 function dpCookies() {
-  this.set = function(cookieName, cookieValue, cookieDurationDays = 7, type = 'day') {
-    if( typeof cookieDurationDays != 'number' ) { cookieDurationDays = 7; }
-    if( typeof cookieDurationDays <= 0 ) { cookieDurationDays = 7; }
+  this.init();
+  this.init = undefined;
+}
+dpCookies.prototype = {
+
+  init : function() { },
+
+  set : function(cookieName, cookieValue, cookieDurationDays = 7, type = 'day') {
+    if ( typeof cookieDurationDays != 'number' ) { cookieDurationDays = 7; }
+    if ( typeof cookieDurationDays <= 0 ) { cookieDurationDays = 7; }
 
     let d = 24;
     let h = 60;
@@ -571,38 +556,38 @@ function dpCookies() {
     let date = new Date();
     date.setTime(date.getTime() + (cookieDurationDays * d * h * 60 * 1000));
     document.cookie = cookieName + '=' + cookieValue + ';' + 'expires=' + date.toUTCString() + ';path=/';
-  }
+  },
 
-  this.get = function(cookieName) {
+  get : function(cookieName) {
     cookieName = cookieName + '=';
     let decodedCookie = document.cookie.split(';');
 
-    for ( let i = 0; i < decodedCookie.length; i++ ) {
+    for (let i = 0; i < decodedCookie.length; i++) {
       let c = decodedCookie[i];
 
-      while( c.charAt(0) == ' ' ) { c = c.substring(1); }
+      while (c.charAt(0) == ' ') { c = c.substring(1); }
 
-      if( c.indexOf(cookieName) == 0 ) { return c.substring(cookieName.length, c.length); }
+      if (c.indexOf(cookieName) == 0) { return c.substring(cookieName.length, c.length); }
     }
 
     return '';
-  }
+  },
 
-  this.delete = function(cookieName) {
+  delete : function(cookieName) {
     let date = new Date();
     date.setTime(date.getTime() - 1000);
     document.cookie = cookieName + '=' + '' + ';' + 'expires=' + date.toUTCString() + ';path=/';
-  }
+  },
 
-  this.setObj = function(obj, cookieDurationDays = 7, type = 'day') {
+  setObj : function(obj, cookieDurationDays = 7, type = 'day') {
     if (typeof(obj) !== 'object') { return false; }
 
     for (let item in obj) {
       this.set(item, JSON.stringify(obj[item]), cookieDurationDays = 7, type = 'day');
     }
-  }
+  },
 
-  this.getObj = function(obj) {
+  getObj : function(obj) {
     if (typeof(obj) !== 'object') { return false; }
 
     let output = {}
@@ -612,40 +597,55 @@ function dpCookies() {
     }
 
     return output;
-  }
+  },
 
-  this.deleteObj = function(obj) {
+  deleteObj : function(obj) {
     if (typeof(obj) !== 'object') { return false; }
 
     for (let item in obj) {
       this.delete(item);
     }
   }
+  
 }
 
 
 
-function dpAJAX(errorIntercept, progressCallback) {
-  this._error = new dpSubject(null);
-  this._progress = new dpSubject({
-    loaded : 0,
-    total : 0,
-  });
+/**
+  * @name dpAJAX
+	* @class
+  * 
+  * 
+**/
+function dpAJAX(errorCallback, progressCallback) {
+  this.init(errorCallback, progressCallback);
+  this.init = undefined;
+}
+dpAJAX.prototype = {
 
-  this.init = function() {
-    this.subError(errorIntercept);
-    this.subProgress(progressCallback);
-  }
+  _error : null,
+  _progress : null,
 
-  this.subError = function(callback) {
+  init : function(errorCallback, progressCallback) {
+    this._error = new dpSubject(null);
+    this._progress = new dpSubject({
+      loaded : 0,
+      total : 0,
+    });
+
+    this.subError(errorCallback);
+    this.subProgress(progressCallback)
+  },
+
+  subError : function(callback) {
     this._error.subscribe(callback);
-  }
+  },
 
-  this.subProgress = function(callback) {
+  subProgress : function(callback) {
     this._progress.subscribe(callback);
-  }
+  },
 
-  this._baseCall = function(url, body, header, callback, type) {
+  _baseCall : async function(url, body, header, callback, type) {
     if (typeof type !== 'string') {
       console.log('Call type needs to be a string!')
       return null;
@@ -663,75 +663,172 @@ function dpAJAX(errorIntercept, progressCallback) {
       }
 
       xhr.onload = () => {
+        const respHeaders = xhr.getAllResponseHeaders().split('\r\n').reduce((result, current) => {
+          let [name, value] = current.split(': ');
+          result[name] = value;
+          return result;
+        }, {});
+
         if (xhr.status != 200) { 
-          console.error(`Error ${xhr.status}: ${xhr.statusText}`);
-          this._error.next({status:xhr.status, statusText:xhr.statusText});
-          reject(xhr.status, xhr.statusText);
-        } else {
-          const respHeaders = xhr.getAllResponseHeaders().split('\r\n').reduce((result, current) => {
-            let [name, value] = current.split(': ');
-            result[name] = value;
-            return result;
-          }, {});
-
-          if (typeof(callback) === 'function') { 
-            callback(xhr.response, respHeaders); 
-          }
-
-          resolve(xhr.response, respHeaders);
+          console.error('Error ' + xhr.status + ': ' + xhr.statusText);
+          this._error.next({
+            status : xhr.status,
+            statusText : xhr.statusText,
+            headers : respHeaders,
+            xhr : xhr,
+          });
+          reject(xhr.status, xhr.statusText, xhr);
+          return;
         }
+
+        if (typeof(callback) === 'function') callback(xhr.response, respHeaders, xhr);
+
+        resolve(xhr.response, respHeaders, xhr);
       };
 
       xhr.onprogress = (event) => {
         if (event.lengthComputable) {
-          this._progress.next({loaded : event.loaded, total : event.total});
+          this._progress.next({
+            loaded : event.loaded, 
+            total : event.total,
+          });
         } else {
-          this._progress.next(event.loaded);
+          this._progress.next({
+            loaded : event.loaded,
+          });
         }
       };
       
-      xhr.onerror = () => {
+      xhr.onerror = function() {
         console.error('Request failed');
       };
 
       xhr.send(body);
     });
-  }
-
-  this.get = function(url, header, callback, type='GET') {
-    return this._baseCall(url, null, header, callback, type);
   },
 
-  this.post = function(url, body, header, callback, type='POST') {
-    return this._baseCall(url, body, header, callback, type);
-  }
+  get : function(url, header, callback) {
+    return this._baseCall(url, null, header, callback, 'GET');
+  },
 
-  this.init();
+  delete : function(url, header, callback) {
+    return this._baseCall(url, null, header, callback, 'DELETE');
+  },
 
-  this.init = null;
+  post : function(url, body, header, callback) {
+    return this._baseCall(url, body, header, callback, 'POST');
+  },
+
+  update : function(url, body, header, callback) {
+    return this._baseCall(url, body, header, callback, 'UPDATE');
+  },
+
+  put : function(url, body, header, callback) {
+    return this._baseCall(url, body, header, callback, 'PUT');
+  },
+  
 }
 
 
 
-class dpFrame {
+function dpEventHandler(bodyFilter='<body>') {
+  this.init(bodyFilter);
+  this.init = undefined;
+}
+dpEventHandler.prototype = {
 
-  _isPaused;
-  _startingTime;
-  _lastTime;
-  _totalElapsedTime;
-  _elapsedSinceLastLoop;
+  _mutation : null,
+  _events : null,
+  _bodyFilter : '',
 
-  _onUpdate;
-  onUpdate(value = null) {
+  init : function(bodyFilter) {
+    this._bodyFilter = bodyFilter;
+    this._events = {};
+
+    this._mutation = new MutationObserver(() => {
+      this.populateEvents();
+    });
+    this._mutation.dpOnBody = false;
+  },
+
+  event : function(type, query, callback) {
+    let body = dp.$('<body>')[0];
+
+    this._events[String(type+query)] = {
+      type : type,
+      query : query,
+      callback : callback,
+    }
+
+    if (!body) {
+      console.log('No parent tag was found');
+      this._mutation.disconnect();
+      this._mutation.dpOnBody = false;
+      return;
+    }
+
+    if (!this._mutation.dpOnBody) {
+      this._mutation.observe(body, {childList : true, subtree : true, attributes : true});
+      this._mutation.dpOnBody = true;
+    }
+  },
+
+  populateEvents() {
+    let setEvent = function(e, t, c) {
+      if (typeof c != 'function') return;
+
+      if (e.addEventListener) {
+        e.addEventListener(t, c, false);
+        return;
+      }
+
+      if (e.attachEvent) {
+        eattachEvent('on'+t, c);
+        return;
+      }
+
+      e['on'+t] = c;
+    }
+
+    for (let k in this._events) {
+      const e = this._events[k];
+      const elements =  dp.$(e.query);
+
+      if (elements instanceof HTMLElement) {
+        setEvent(elements, e.type, e.callback);
+        continue;
+      }
+
+      for (let element = 0; element < elements.length; element++) setEvent(elements[element], e.type, e.callback);
+    }
+  },
+  
+}
+
+
+
+function dpFrame(callbackOnStart) {
+  this.init(callbackOnStart);
+  this.init = undefined;
+}
+dpFrame.prototype = {
+  _isPaused : null,
+  _startingTime : null,
+  _lastTime : null,
+  _totalElapsedTime : null,
+  _elapsedSinceLastLoop : null,
+
+  _onUpdate : null,
+  onUpdate : function(value = null) {
     if (typeof value == 'function') { this._onUpdate.subscribe(value); }
-  }
+  },
 
-  _onLateUpdate;
-  onLateUpdate(value = null) {
+  _onLateUpdate : null,
+  onLateUpdate : function(value = null) {
     if (typeof value == 'function') { this._onLateUpdate.subscribe(value); }
-  }
+  },
 
-  constructor(callbackOnStart) {
+  init : function(callbackOnStart) {
     this._isPaused = false;
     this._onUpdate = new dpSubject(null);
     this._onLateUpdate = new dpSubject(null);
@@ -751,9 +848,9 @@ class dpFrame {
 
       if (typeof callbackOnStart == 'function') { callbackOnStart(); }
     });
-  }
+  },
 
-  frame(currentTime) {
+  frame : function(currentTime) {
     if (this._isPaused) {
       requestAnimationFrame((t) => {this.frame(t);});
       return null;
@@ -768,15 +865,25 @@ class dpFrame {
     this._onLateUpdate.next(this._elapsedSinceLastLoop);
 
     requestAnimationFrame((t) => {this.frame(t);});
-  }
+  },
 
-  pause() {
+  pause : function() {
     this._isPaused = true;
-  }
+  },
 
-  unpause() {
+  unpause : function() {
     this._isPaused = false;
-  }
+  },
+
+}
+
+
+
+function dpSPA() {
+  this.init();
+  this.init = undefined;
+}
+dpSPA.prototype = {
 
 }
 
@@ -788,9 +895,10 @@ class dpComponents {
   static _logic = {}
 
   static registerStyle(tag, style) {
-    let promise = new Promise(resolve => {
+    return new Promise(resolve => {
       let head = dp.$('<head>')[0];
       let dpStyles = dp.$('<dp-styles>');
+      let styleInner = document.createElement('style');
 
       if (dpStyles.length == 0) {
         dpStyles = document.createElement('dp-styles');
@@ -812,20 +920,26 @@ class dpComponents {
         }
       }
 
+      if (!tag) {
+        styleInner.innerHTML = style;
+        dpStyles.append(styleInner);
+        resolve(true);
+        return true;
+      }
+
       if (styleID) {
         styleID.innerHTML = buildStyle(tag, style);
         resolve(true);
+        return true;
       }
 
-      let styleInner = document.createElement('style');
       styleInner.setAttribute('id', 'dp-style-' + tag);
       styleInner.innerHTML = buildStyle(tag, style);
       dpStyles.append(styleInner);
       
       resolve(true);
+      return true;
     });
-
-    return promise;
   }
 
   static async register(tag, style, template, buildType = 'function', templateClass) {
@@ -874,9 +988,78 @@ class dpComponents {
 
 
 
-class dpColor  {
+/**
+  * @name dpColor
+	* @class
+  * 
+  * 
+**/
+var dpColor = new function()  {
 
-  static rgbToHSL(cR, cG, cB) {
+  this.kelvinTable = {
+    1000: [255, 56, 0],
+    1500: [255, 109, 0],
+    1900: [255, 131, 0],
+    2000: [255, 137, 18],
+    2200: [255, 147, 44],
+    2500: [255, 161, 72],
+    2700: [255, 169, 87],
+    2800: [255, 173, 94],
+    2900: [255, 177, 101],
+    3000: [255, 180, 107],
+    3500: [255, 196, 137],
+    4000: [255, 209, 163],
+    4100: [255, 211, 168],
+    4300: [255, 215, 177],
+    4500: [255, 219, 186],
+    5000: [255, 228, 206],
+    5100: [255, 230, 210],
+    5200: [255, 232, 213],
+    5300: [255, 233, 217],
+    5400: [255, 235, 220],
+    5500: [255, 236, 224],
+    5600: [255, 238, 227],
+    5700: [255, 239, 230],
+    6000: [255, 243, 239],
+    6500: [255, 249, 253],
+    6600: [254, 249, 255],
+    6700: [252, 247, 255],
+    6800: [249, 246, 255],
+    6900: [247, 245, 255],
+    7000: [245, 243, 255],
+    7100: [243, 242, 255],
+    7200: [240, 241, 255],
+    7300: [239, 240, 255],
+    7400: [237, 239, 255],
+    7500: [235, 238, 255],
+    8000: [227, 233, 255],
+    8500: [220, 229, 255],
+    9000: [214, 225, 255],
+    9300: [210, 223, 255],
+    9500: [208, 222, 255],
+    9600: [207, 221, 255],
+    9700: [207, 221, 255],
+    9800: [206, 220, 255],
+    9900: [205, 220, 255],
+    10000: [204, 219, 255],
+    10500: [200, 217, 255],
+    11000: [200, 213, 255],
+    11500: [193, 213, 255],
+    12000: [191, 211, 255],
+    12500: [188, 210, 255],
+    13000: [186, 208, 255],
+    13500: [184, 207, 255],
+    14000: [182, 206, 255],
+    14500: [180, 205, 255],
+    15000: [179, 204, 255],
+    15500: [177, 203, 255],
+    16000: [176, 202, 255],
+    16500: [175, 201, 255],
+    17000: [174, 200, 255],
+    17500: [173, 200, 255],
+  }
+
+  this.rgbToHSL = function(cR, cG, cB) {
 
     let r = dp.byte(cR) / 255;
     let g = dp.byte(cG) / 255;
@@ -912,7 +1095,7 @@ class dpColor  {
     return {h: h, s: s, l: l};
   }
 
-  static hslToRGB(h, s, l) {
+  this.hslToRGB = function(h, s, l) {
     let r, g, b = 0;
     let val1, val2;
 
@@ -948,7 +1131,7 @@ class dpColor  {
     return dp.rgba(r, g, b);
   }
 
-  static colorTemperatureToRgb(value) {
+  this.colorTemperatureToRgb = function(value) {
     let r, g, b;
 
     try {
@@ -984,12 +1167,163 @@ class dpColor  {
 
 }
 
+Object.freeze(dpColor);
 
 
-function dpImageProcessing(callback = null) {
-  this.init(callback);
+
+/**
+  * @name dpCanvas2dCtx
+	* @class
+  * 
+  * 
+**/
+function dpCanvas2dCtx() {
+  this.init();
+  this.init = undefined;
+}
+dpCanvas2dCtx.prototype = {
+
+  onLoadEvent : null,
+  file : null,
+  img: null,
+  imgData : {
+    iName : '',
+    iSize : 0,
+    iType : '',
+    src : '',
+    width : 0,
+    height : 0,
+  },
+  ctxOrg: null,
+  ctxActive: null,
+
+  init : function() { 
+    this.onLoadEvent = new dpSubject();
+  },
+
+  onLoad: function(callback) {
+    this.onLoadEvent.subscribe(callback);
+  },
+
+  loadImage : function(e, type='event') {
+    if (!e) { return; }
+
+    let files = null;
+
+    if (type === 'src') { 
+      this.registerImage(e);
+      return;
+    }
+
+    if (type === 'event') { 
+      files = e.target.files; 
+    } else if(type === 'file') {
+      files = e;
+    } else { return; }
+
+    if (FileReader && files && files.length) {
+      this.imgData.iName = files[0].name;
+      this.imgData.iSize = files[0].size;
+      this.imgData.iType = files[0].type;
+
+      this.file = files[0];
+
+      let fr = new FileReader();
+      fr.onload = () => this.registerImage(fr.result);
+      fr.readAsDataURL(files[0]);
+    } else {
+      console.error('There was an unknown error. Check if FileReader is supported');
+    }
+  },
+
+  registerImage : function(src) {
+    let img = document.createElement('img');
+    img.onload = () => this.createCanvasCtxFromImage(img);
+    img.src = src;
+    this.imgData.src = src;
+    this.img = img;
+  },
+
+  createCanvasCtxFromImage : function(img) {
+    try {
+      let canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      this.imgData.width = img.width;
+      this.imgData.height = img.height;
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      this.ctxOrg = ctx;
+      this.ctxActive = this.duplicateCtxOrg();
+    } catch(error) {
+      console.error(error);
+      return;
+    }
+
+    this.onLoadEvent.next(null);
+  },
+
+  generate2dCtx : function(w = this.imgData.width, h = this.imgData.height) {
+    let newCanvas = document.createElement('canvas');
+    newCanvas.width = w;
+    newCanvas.height = h;
+    return  newCanvas.getContext('2d');
+  },
+
+  duplicateCtxOrg : function() {
+    let context = this.generate2dCtx(this.ctxOrg.canvas.width, this.ctxOrg.canvas.height)
+    context.drawImage(this.ctxOrg.canvas, 0, 0);
+    return context;
+  },
+
+  duplicateCtxActive : function() {
+    let context = this.generate2dCtx(this.ctxActive.canvas.width, this.ctxActive.canvas.height)
+    context.drawImage(this.ctxActive.canvas, 0, 0);
+    return context;
+  },
+
+  getImageUrl : function(mimeType = 'image/png') {
+    return this.ctxActive.canvas.toDataURL(mimeType);
+  },
+
+  getOriginalImageUrl : function(mimeType = 'image/png') {
+    return this.ctxOrg.canvas.toDataURL(mimeType);
+  },
+
+  reset : function() {
+    this.ctxActive = this.duplicateCtxOrg();
+  },
+
+  getWidth : function() {
+    return this.ctxActive.canvas.width;
+  },
+
+  getHeight : function() {
+    return this.ctxActive.canvas.height;
+  },
+
+  getCanvas : function() {
+    return this.ctxActive.canvas;
+  },
+
+  getImageData : function() {
+    return this.ctxActive.getImageData(0, 0, this.getWidth(), this.getHeight());
+  },
+
 }
 
+
+
+/**
+  * @name dpImageProcessing
+	* @class
+  * 
+  * 
+**/
+function dpImageProcessing(callback = null) {
+  this.init(callback);
+  this.init = undefined;
+}
 dpImageProcessing.prototype = {
 
   kelvinTable : null,
@@ -997,71 +1331,6 @@ dpImageProcessing.prototype = {
 
   init : function (callback) { 
     this.dpCtx = new dpCanvas2dCtx();
-
-    this.kelvinTable = {
-      1000: [255, 56, 0],
-      1500: [255, 109, 0],
-      1900: [255, 131, 0],
-      2000: [255, 137, 18],
-      2200: [255, 147, 44],
-      2500: [255, 161, 72],
-      2700: [255, 169, 87],
-      2800: [255, 173, 94],
-      2900: [255, 177, 101],
-      3000: [255, 180, 107],
-      3500: [255, 196, 137],
-      4000: [255, 209, 163],
-      4100: [255, 211, 168],
-      4300: [255, 215, 177],
-      4500: [255, 219, 186],
-      5000: [255, 228, 206],
-      5100: [255, 230, 210],
-      5200: [255, 232, 213],
-      5300: [255, 233, 217],
-      5400: [255, 235, 220],
-      5500: [255, 236, 224],
-      5600: [255, 238, 227],
-      5700: [255, 239, 230],
-      6000: [255, 243, 239],
-      6500: [255, 249, 253],
-      6600: [254, 249, 255],
-      6700: [252, 247, 255],
-      6800: [249, 246, 255],
-      6900: [247, 245, 255],
-      7000: [245, 243, 255],
-      7100: [243, 242, 255],
-      7200: [240, 241, 255],
-      7300: [239, 240, 255],
-      7400: [237, 239, 255],
-      7500: [235, 238, 255],
-      8000: [227, 233, 255],
-      8500: [220, 229, 255],
-      9000: [214, 225, 255],
-      9300: [210, 223, 255],
-      9500: [208, 222, 255],
-      9600: [207, 221, 255],
-      9700: [207, 221, 255],
-      9800: [206, 220, 255],
-      9900: [205, 220, 255],
-      10000: [204, 219, 255],
-      10500: [200, 217, 255],
-      11000: [200, 213, 255],
-      11500: [193, 213, 255],
-      12000: [191, 211, 255],
-      12500: [188, 210, 255],
-      13000: [186, 208, 255],
-      13500: [184, 207, 255],
-      14000: [182, 206, 255],
-      14500: [180, 205, 255],
-      15000: [179, 204, 255],
-      15500: [177, 203, 255],
-      16000: [176, 202, 255],
-      16500: [175, 201, 255],
-      17000: [174, 200, 255],
-      17500: [173, 200, 255],
-    }
-
-    Object.freeze(this.kelvinTable);
 
     if (typeof callback == 'function') {
       this.onLoad(callback);
@@ -1089,12 +1358,12 @@ dpImageProcessing.prototype = {
   },
 
   convolution : function (imgData, operationMatrix) {
-    if ( !(imgData instanceof ImageData) ) {
+    if ( !(imgData instanceof ImageData) || !operationMatrix ) {
       console.error('imgData param is required to an instance of ImageData');
       return null;
     }
 
-    if ( imgData.data.length <= 0) return new ImageData(0, 0);
+    if ( imgData.data.length <= 1) return null;
 
     let side = Math.round(Math.sqrt(operationMatrix.length));
     let halfSide = Math.floor(side / 2);
@@ -1382,19 +1651,12 @@ dpImageProcessing.prototype = {
 
     if (value <= 0) { return false; }
 
-    let color = this.kelvinTable[value];
 
-    if (!color) { 
-      let gen = dpColor.colorTemperatureToRgb(value);
-      color = [];
-      color[0] = gen.r;
-      color[1] = gen.g;
-      color[2] = gen.b;
-    }
+    let gen = dpColor.colorTemperatureToRgb(value);
 
-    let r = color[0] / 255;
-    let g = color[1] / 255;
-    let b = color[2] / 255;
+    let r = gen.r / 255;
+    let g = gen.g / 255;
+    let b = gen.b / 255;
 
     let imgData = this.dpCtx.getImageData();
     let data = imgData.data;
@@ -1585,9 +1847,7 @@ dpImageProcessing.prototype = {
     }
 
     let imgData = this.convolution(this.dpCtx.getImageData(), operator);
-
     if ( !imgData ) return false;
-
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
     return true;
@@ -1634,9 +1894,7 @@ dpImageProcessing.prototype = {
     }
 
     let imgData = this.convolution(this.dpCtx.getImageData(), operator);
-
     if ( !imgData ) return false;
-    
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
     return true;
@@ -1650,9 +1908,7 @@ dpImageProcessing.prototype = {
     ];
 
     let imgData = this.convolution(this.dpCtx.getImageData(), operator);
-
     if (!imgData) return false;
-
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
     return true;
@@ -1695,9 +1951,68 @@ dpImageProcessing.prototype = {
     }
 
     let imgData = this.convolution(this.dpCtx.getImageData(), operator);
-
     if (!imgData) return false;
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
+    return true;
+  },
+
+  
+
+  sobel : function(type = 'x1') {
+    let operator;
+
+    switch(type) {
+      case 'x1': {
+        operator = [
+          -1, -2, -1,
+          0, 0, 0,
+          1, 2, 1,
+        ];
+        break;
+      }
+      case 'x2': {
+        operator = [
+          1, 2, 1,
+          0, 0, 0,
+          -1, -2, -1,
+        ];
+        break;
+      }
+      case 'y1': {
+        operator = [
+          -1, 0, 1,
+          -2, 0, 2,
+          -1, 0, 1,
+        ];
+        break;
+      }
+      case 'y2': {
+        operator = [
+          1, 0, -1,
+          2, 0, -2,
+          1, 0, -1,
+        ];
+        break;
+      }
+    }
+
+    let imgData = this.convolution(this.dpCtx.getImageData(), operator);
+    if (!imgData) return false;
+    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
+
+    return true;
+  },
+
+  roberts : function() {
+    let operator = [
+      0, 0, 0, 
+      1, -1, 0, 
+      0, 0, 0,
+    ];
+
+    let imgData = this.convolution(this.dpCtx.getImageData(), operator);
+    if (!imgData) return false;
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
     return true;

@@ -36,6 +36,8 @@
 
 dpVerifyES6(true);
 
+var app = new Object();
+
 class Engine extends dp3dEngine {
   loadView(ele) {
     let view = dp.$('<app-display>')[0];
@@ -44,18 +46,18 @@ class Engine extends dp3dEngine {
   }
 }
 
-let index = {
+var index = {
   test : null,
-  _3D : null,
 
   init : function() {
     dp.$('<app-display>')[0].innerHTML = `
-      <input style="margin: 6px;" type="file" onchange="index.test.loadImage(event)"></input>
+      <input style="margin: 6px;" load-img type="file"></input>
       <img id="org-img" style="margin: 6px;" width="400px" height="auto"></img>
       <img id="test-img" style="margin: 6px;" width="400px" height="auto"></img>
     `;
 
     this.test = new dpImageProcessing(() => {
+      /*
       this.test.temperature(6200);
       this.test.lightness(7);
       this.test.gamma(1.15)
@@ -64,7 +66,8 @@ let index = {
       this.test.rotateImage(true);
       this.test.saturation(-3);
       this.test.highpass(3);
-      this.test.noise(5);
+      this.test.noise(5); 
+      */
       console.log(this.test.histogram());
       dp.$("#org-img").src  = this.test.getOrgImg();
       dp.$("#test-img").src = this.test.getImg();
@@ -72,15 +75,14 @@ let index = {
   },
 };
 
-dp.main(() => {
-  let c = new dpAJAX();
-  c.get('test/test.html').then((data) => {
-    console.log(data);
-  });
+dp.main(function() {
+  app.cookies = new dpCookies();
+  app.ajax = new dpAJAX();
+  app.events = new dpEventHandler();
+});
 
+dp.onload(function() {
+  app.events.event('change', 'input[load-img]', (event) => { index.test.loadImage(event) });
   index.init();
-
-  if(false) {
-    this._3D = new Engine(1);
-  }
+  // new Engine(1);
 });

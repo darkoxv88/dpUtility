@@ -34,13 +34,7 @@
 
 "use strict";
 
-( function( window ) {
-  
-  dpVerifyES6(true);
-
-  window.dpVec3 = null;
-
-} )( window );
+dpVerifyES6(true);
 
 
 
@@ -85,6 +79,7 @@ class dp3dEngineBase {
 
     try {
       canvas = document.createElement('canvas');
+      canvas.innerHTML = 'This browser does not support HTML5';
       canvas.setAttribute('dp-canvas-engine', this.index);
       supported = window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
     } catch(e) {
