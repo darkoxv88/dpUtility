@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.0.5
+  * @version 1.0.6
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,9 +34,7 @@
 
 "use strict";
 
-( function(window) {
-  if (window.dp) window.dp = undefined;
-}) (window)
+window.dp = undefined;
 
 /**	
   * @name dpVerifyES6
@@ -121,35 +119,50 @@ var dp = new function() {
     * @function
     * Gets DOMelement/s
     * @param {string} value
+
     * If the string starts with '#' it will search by id attribute.
-    * If the string starts with '.' it will search by class attribute.
     * If the string starts with '&' it will search by name attribute.
+    * If the string starts with '.' it will search by class attribute.
     * If the string is in HTML tag format '<>' it will search all DOM elements as that tag.
     * Everything else will use generic query selector.
+    * @param {Element} target
+    * If the target is of type Element it wil perform querySelectorAll on its chields and grandchields
     * @returns HTMLElement | HTMLCollectionOf<Element> | NodeListOf<Element>
   **/
-   this.$ = function(value) {
+   this.$ = function(value, target) {
     if (typeof value != 'string' || !value) return null;
   
     let firstChar = value[0];
     let subFirst = value.substr(1);
+
+    let validateTarge = function(t) {
+      if (!t) return false;
+      if (t instanceof Element !== true) return false;
+      if (!t.getElementsByClassName) return false;
+      if (!t.getElementsByTagName) return false;
+      if (!t.querySelectorAll) return false;
+      return true;
+    }(target);
   
     if (firstChar == '#') {
       return document.getElementById(subFirst);
     }
-  
-    if (firstChar == '.') {
-      return document.getElementsByClassName(subFirst);
-    }
-  
+
     if (firstChar == '&') { 
       return document.getElementsByName(subFirst);
     }
   
+    if (firstChar == '.') {
+      if (validateTarge) return target.getElementsByClassName(subFirst);
+      return document.getElementsByClassName(subFirst);
+    }
+  
     if (firstChar == '<') {
+      if (validateTarge) return target.getElementsByTagName(subFirst.substr(0, subFirst.length-1));
       return document.getElementsByTagName(subFirst.substr(0, subFirst.length-1));
     }
   
+    if (validateTarge) return target.querySelectorAll(value);
     return document.querySelectorAll(value);
   };
 
@@ -184,7 +197,13 @@ var dp = new function() {
     * Handels the main call function
   **/
   this.main = function(mainFunc) {
-    if (typeof mainFunc == 'function') mainFunc();
+    try {
+      if (typeof mainFunc == 'function') mainFunc();
+    } catch(err) {
+      console.error(err);
+    } finally {
+      return 0;
+    }
   }
 
   /**
@@ -193,7 +212,7 @@ var dp = new function() {
     * @function
     * This function is called as the window.onload event
   **/
-  this.onload = function(loadFunc) {
+  this.onLoad = function(loadFunc) {
     if (typeof loadFunc != 'function') return null;
 
     if (window.addEventListener) {
@@ -218,6 +237,57 @@ var dp = new function() {
     } else { 
       window.onload = loadFunc;
     }
+  }
+
+  /**
+    * @name registerStyle
+    * @returns {boolean}
+    * @function
+    * 
+  **/
+  this.registerStyle = function(tag, style) {
+    let head = dp.$('<head>')[0];
+    let dpStyles = dp.$('<dp-styles>');
+    let styleInner = document.createElement('style');
+
+    if (dpStyles.length == 0) {
+      dpStyles = document.createElement('dp-styles');
+      dpStyles.setAttribute('hidden', true);
+      head.append(dpStyles);
+    } else {
+      dpStyles = dpStyles[0];
+    }
+
+    if (typeof tag != 'string' || typeof style != 'string') return false;
+
+    let styleID = dp.$('#dp-style-' + tag);
+    let buildStyle = function(tag, style) {
+      let count = [...style].filter(x => x === '{').length;
+      let s = style.split('}');
+
+      let output = tag + ' {display: block;} ';
+      for (let i in s) {
+        if (i == count) return output;
+        output += tag + " " + s[i] + "} "
+      }
+    }
+
+    if (!tag) {
+      styleInner.innerHTML = style;
+      dpStyles.append(styleInner);
+      return true;
+    }
+
+    if (styleID) {
+      styleID.innerHTML = buildStyle(tag, style);
+      return true;
+    }
+
+    styleInner.setAttribute('id', 'dp-style-' + tag);
+    styleInner.innerHTML = buildStyle(tag, style);
+    dpStyles.append(styleInner);
+
+    return true;
   }
 
   /**
@@ -301,6 +371,11 @@ var dp = new function() {
   this.radToDeg = function(val) {
     if (typeof(val) == 'number') return (val * (180 / Math.PI)); else return undefined;
   }
+
+  this.cookies = null;
+  this.ajax = null;
+  this.events = null;
+  this.frame = null;
 
 }
 
@@ -451,6 +526,57 @@ var dpVec3 = new function() {
 
 
 
+var dpVec4 = new function() {
+
+  this._array = dpConst.floatArray;
+
+  this.empty = function() {
+    let out = new this._array(3);
+    out[0] = 0;
+    out[1] = 0;
+    out[2] = 0;
+    out[3] = 0;
+    return out;
+  }
+
+  this.create = function(x, y, z, m) {
+    let out = this.empty(3);
+    out[0] = x;
+    out[1] = y;
+    out[2] = z;
+    out[3] = m;
+    return out;
+  }
+
+  this.clone = function(v) {
+    let out = this.empty(3);
+    out[0] = v[0];
+    out[1] = v[1];
+    out[2] = v[2];
+    out[3] = v[3];
+    return out;
+  }
+
+  this.add = function(v1, v2) {
+    return this.create(v1[0]+v2[0], v1[1]+v2[1], v1[2]+v2[2], v1[3]+v2[3]);
+  }
+
+  this.sub = function(v1, v2) {
+    return this.create(v1[0]-v2[0], v1[1]-v2[1], v1[2]-v2[2], v1[3]-v2[3]);
+  }
+
+  this.mul = function(v1, v2) {
+    return this.create(v1[0]*v2[0], v1[1]*v2[1], v1[2]*v2[2], v1[3]*v2[3]);
+  }
+
+  this.div = function(v1, v2) {
+    return this.create(v1[0]/v2[0], v1[1]/v2[1], v1[2]/v2[2], v1[3]/v2[3]);
+  }
+
+}
+
+
+
 var dpMat2x2 = new function() {
 
   this._array = dpConst.floatArray;
@@ -535,6 +661,12 @@ dpSubject.prototype = {
 
 
 
+/**
+  * @name dpCookies
+	* @class
+  * 
+  * 
+**/
 function dpCookies() {
   this.init();
   this.init = undefined;
@@ -731,18 +863,24 @@ dpAJAX.prototype = {
 
 
 
-function dpEventHandler(bodyFilter='<body>') {
+/**
+  * @name dpEventsHandler
+	* @class
+  * 
+  * 
+**/
+function dpEventsHandler(bodyFilter) {
   this.init(bodyFilter);
   this.init = undefined;
 }
-dpEventHandler.prototype = {
+dpEventsHandler.prototype = {
 
   _mutation : null,
   _events : null,
   _bodyFilter : '',
 
   init : function(bodyFilter) {
-    this._bodyFilter = bodyFilter;
+    this._bodyFilter = '<body>';
     this._events = {};
 
     this._mutation = new MutationObserver(() => {
@@ -751,13 +889,17 @@ dpEventHandler.prototype = {
     this._mutation.dpOnBody = false;
   },
 
-  event : function(type, query, callback) {
-    let body = dp.$('<body>')[0];
+  add : function(type, query, callback) {
+    let body = dp.$(this._bodyFilter);
 
-    this._events[String(type+query)] = {
-      type : type,
-      query : query,
-      callback : callback,
+    if (body instanceof HTMLElement !== true) body = body[0];
+
+    if (typeof type == 'string' && typeof query == 'string'  && typeof callback == 'function') {
+      this._events[String(type+query)] = {
+        type : type,
+        query : query,
+        callback : callback,
+      }
     }
 
     if (!body) {
@@ -783,7 +925,7 @@ dpEventHandler.prototype = {
       }
 
       if (e.attachEvent) {
-        eattachEvent('on'+t, c);
+        e.attachEvent('on'+t, c);
         return;
       }
 
@@ -807,6 +949,12 @@ dpEventHandler.prototype = {
 
 
 
+/**
+  * @name dpFrame
+	* @class
+  * 
+  * 
+**/
 function dpFrame(callbackOnStart) {
   this.init(callbackOnStart);
   this.init = undefined;
@@ -874,109 +1022,6 @@ dpFrame.prototype = {
   unpause : function() {
     this._isPaused = false;
   },
-
-}
-
-
-
-function dpSPA() {
-  this.init();
-  this.init = undefined;
-}
-dpSPA.prototype = {
-
-}
-
-
-
-class dpComponents {
-
-  static _components = {}
-  static _logic = {}
-
-  static registerStyle(tag, style) {
-    return new Promise(resolve => {
-      let head = dp.$('<head>')[0];
-      let dpStyles = dp.$('<dp-styles>');
-      let styleInner = document.createElement('style');
-
-      if (dpStyles.length == 0) {
-        dpStyles = document.createElement('dp-styles');
-        dpStyles.setAttribute('hidden', true);
-        head.append(dpStyles);
-      } else {
-        dpStyles = dpStyles[0];
-      }
-
-      let styleID = dp.$('#dp-style-' + tag);
-      let buildStyle = function(tag, style) {
-        let count = [...style].filter(x => x === '{').length;
-        let s = style.split('}');
-
-        let output = '';
-        for (let i in s) {
-          if (i == count) return output;
-          output += tag + " " + s[i] + "} "
-        }
-      }
-
-      if (!tag) {
-        styleInner.innerHTML = style;
-        dpStyles.append(styleInner);
-        resolve(true);
-        return true;
-      }
-
-      if (styleID) {
-        styleID.innerHTML = buildStyle(tag, style);
-        resolve(true);
-        return true;
-      }
-
-      styleInner.setAttribute('id', 'dp-style-' + tag);
-      styleInner.innerHTML = buildStyle(tag, style);
-      dpStyles.append(styleInner);
-      
-      resolve(true);
-      return true;
-    });
-  }
-
-  static async register(tag, style, template, buildType = 'function', templateClass) {
-    if (this._components[tag]) { return false; }
-
-    this._components[tag] = {};
-
-    let promise = new Promise(async (resolve) => {
-      if (typeof tag !== 'string') resolve(false);
-
-      let activateClass;
-      let activateStyle = await this.registerStyle(tag, style);
-
-      this._components[tag] = {
-        name: tag,
-        style: activateStyle,
-        template : template,
-        type : buildType,
-      }
-      
-      if (typeof templateClass == 'function') activateClass = new templateClass();
-
-      this._logic[tag] = activateClass;
-
-      resolve(true);
-    });
-
-    return await promise;
-  }
-
-  static event(tag, func, data) {
-    if (typeof this._logic[tag][func] == 'function') this._logic[tag][func](data);
-  }
-
-  static test() {
-    dpComponents.register('dp-a', '.a{display: block} .b{display: block} .c{width: 100%}', null, 'function', class test{});
-  }
 
 }
 
@@ -1166,8 +1211,6 @@ var dpColor = new function()  {
   }
 
 }
-
-Object.freeze(dpColor);
 
 
 
@@ -1998,10 +2041,8 @@ dpImageProcessing.prototype = {
     }
 
     let imgData = this.convolution(this.dpCtx.getImageData(), operator);
-    if (!imgData) return false;
-    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
-    return true;
+    return imgData;
   },
 
   roberts : function() {
@@ -2012,10 +2053,23 @@ dpImageProcessing.prototype = {
     ];
 
     let imgData = this.convolution(this.dpCtx.getImageData(), operator);
-    if (!imgData) return false;
-    this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
-    return true;
+    return imgData;
   },
 
 }
+
+
+
+// *********************** 
+// Instantiate services ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// *********************** 
+
+
+
+dp.main(function() {
+  dp.cookies = new dpCookies();
+  dp.ajax = new dpAJAX();
+  dp.events = new dpEventsHandler();
+  dp.frame = new dpFrame();
+});
