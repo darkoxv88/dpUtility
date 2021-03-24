@@ -36,8 +36,6 @@
 
 dpVerifyES6(true);
 
-var app = new Object();
-
 class Engine extends dp3dEngine {
   loadView(ele) {
     let view = dp.$('<app-display>')[0];
@@ -57,7 +55,6 @@ var index = {
     `;
 
     this.test = new dpImageProcessing(() => {
-      /*
       this.test.temperature(6200);
       this.test.lightness(7);
       this.test.gamma(1.15)
@@ -67,7 +64,6 @@ var index = {
       this.test.saturation(-3);
       this.test.highpass(3);
       this.test.noise(5); 
-      */
       console.log(this.test.histogram());
       dp.$("#org-img").src  = this.test.getOrgImg();
       dp.$("#test-img").src = this.test.getImg();
@@ -76,13 +72,11 @@ var index = {
 };
 
 dp.main(function() {
-  app.cookies = new dpCookies();
-  app.ajax = new dpAJAX();
-  app.events = new dpEventHandler();
+
 });
 
-dp.onload(function() {
-  app.events.event('change', 'input[load-img]', (event) => { index.test.loadImage(event) });
+dp.onLoad(function() {
+  dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event) });
   index.init();
   // new Engine(1);
 });
