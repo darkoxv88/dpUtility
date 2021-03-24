@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.0.6
+  * @version 1.0.7
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -387,6 +387,12 @@ var dp = new function() {
 
 
 
+/**
+  * @name dpVec2
+	* @class
+  * 
+  * 
+**/
 var dpVec2 = new function() {
 
   this._array = dpConst.floatArray;
@@ -453,6 +459,12 @@ var dpVec2 = new function() {
 
 
 
+/**
+  * @name dpVec3
+	* @class
+  * 
+  * 
+**/
 var dpVec3 = new function() {
 
   this._array = dpConst.floatArray;
@@ -526,6 +538,12 @@ var dpVec3 = new function() {
 
 
 
+/**
+  * @name dpVec4
+	* @class
+  * 
+  * 
+**/
 var dpVec4 = new function() {
 
   this._array = dpConst.floatArray;
@@ -573,10 +591,20 @@ var dpVec4 = new function() {
     return this.create(v1[0]/v2[0], v1[1]/v2[1], v1[2]/v2[2], v1[3]/v2[3]);
   }
 
+  this.scale = function(v1, scale) {
+    return this.create(v1[0] * scale, v1[1] * scale, v1[2] * scale, v1[3] * scale); 
+  }
+
 }
 
 
 
+/**
+  * @name dpMat2x2
+	* @class
+  * 
+  * 
+**/
 var dpMat2x2 = new function() {
 
   this._array = dpConst.floatArray;
