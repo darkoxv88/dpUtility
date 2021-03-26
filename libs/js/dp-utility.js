@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.0.7
+  * @version 1.0.8
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -87,12 +87,18 @@ Object.freeze(dpConst);
   * @function $
   * @function each
   * @function main
+  * @function onLoad
+  * @function registerStyle
   * @function byte
   * @function rgba
   * @function maxCap
   * @function minCap
   * @function degToRad
   * @function radToDeg
+  * @service cookie
+  * @service ajax
+  * @service events
+  * @service frame
 **/
 var dp = new function() {
   /**
@@ -125,8 +131,10 @@ var dp = new function() {
     * If the string starts with '.' it will search by class attribute.
     * If the string is in HTML tag format '<>' it will search all DOM elements as that tag.
     * Everything else will use generic query selector.
+    * 
     * @param {Element} target
     * If the target is of type Element it wil perform querySelectorAll on its chields and grandchields
+    * 
     * @returns HTMLElement | HTMLCollectionOf<Element> | NodeListOf<Element>
   **/
    this.$ = function(value, target) {
@@ -243,7 +251,11 @@ var dp = new function() {
     * @name registerStyle
     * @returns {boolean}
     * @function
-    * 
+    * Adds the given style to head
+    * @param {string} tag
+    * should be a string of a html tag, ex: div || html-tag 
+    * @param {string} style
+    * Encompasses the given style param around the tag param
   **/
   this.registerStyle = function(tag, style) {
     let head = dp.$('<head>')[0];
@@ -364,15 +376,31 @@ var dp = new function() {
     return value;
   }
 
+  /**
+    * @name degToRad
+    * @returns {number}
+    * @function
+    * Converts the given degree to radian
+    * @param {number} tag
+    * Degree value to convert.
+  **/
   this.degToRad = function(val) {
     if (typeof(val) == 'number') return (val * (Math.PI / 180)); else return undefined;
   }
 
+  /**
+    * @name radToDeg
+    * @returns {number}
+    * @function
+    * Converts the given radian to degre
+    * @param {number} tag
+    * Radian value to convert.
+  **/
   this.radToDeg = function(val) {
     if (typeof(val) == 'number') return (val * (180 / Math.PI)); else return undefined;
   }
 
-  this.cookies = null;
+  this.cookie = null;
   this.ajax = null;
   this.events = null;
   this.frame = null;
@@ -624,59 +652,60 @@ var dpMat2x2 = new function() {
 
 
 /**
-  * @name dpSubject
+  * @name dpCallback
 	* @class
   * 
   * 
 **/
-function dpSubject(value, sub = null) {
+function dpCallback(value, sub = null) {
   this.init(value, sub);
   this.init = undefined;
 }
-dpSubject.prototype = {
+dpCallback.prototype = {
 
-  value : null,
-  call : null,
+  _value : null,
+  _call : null,
 
   init : function(value, sub) {
-    this.value = value;
+    this._value = value;
     this.subscribe(sub);
   },
 
+  destructor : function() {
+    this._value = undefined;
+    this._call = undefined;
+    delete this;
+  },
+
   subscribe : function(callback) { 
-    if (!callback) { return; }
-
-    if (typeof(callback) !== 'function') { 
-      console.error(`callback: ${callback} is not a function`);
-      return; 
-    }
-
-    this.call = callback;
+    if (!callback) return;
+    if (typeof(callback) !== 'function')  return;
+    this._call = callback;
   },
 
   unsubscribe : function() { 
-    this.call = null;
+    this._call = null;
   },
 
-  reset : function () {
-    this.value = null;
+  reset : function() {
+    this._value = null;
     this.unsubscribe();
   },
 
   fireEvent : function() {
     try {
-      if (typeof(this.call) !== 'function') { return; }
-      this.call(this.value);
+      if (typeof(this._call) !== 'function') { return; }
+      this._call(this._value);
     } catch(err) { console.error(err); }
   },
 
   next : function(value) {
-    this.value = value;
+    this._value = value;
     this.fireEvent();
   },
 
   getValue : function() {
-    return this.value;
+    return this._value;
   },
 
 }
@@ -690,47 +719,51 @@ dpSubject.prototype = {
 
 
 /**
-  * @name dpCookies
+  * @name dpCookie
 	* @class
   * 
   * 
 **/
-function dpCookies() {
+function dpCookie() {
   this.init();
   this.init = undefined;
 }
-dpCookies.prototype = {
+dpCookie.prototype = {
 
   init : function() { },
 
-  set : function(cookieName, cookieValue, cookieDurationDays = 7, type = 'day') {
-    if ( typeof cookieDurationDays != 'number' ) { cookieDurationDays = 7; }
-    if ( typeof cookieDurationDays <= 0 ) { cookieDurationDays = 7; }
+  destructor : function() {
+    delete this;
+  },
+
+  put : function(cookieName, cookieValue, cookieDurationDays = 7, type = 'day') {
+    if (typeof cookieName != 'string') { cookieName = 'noname' }
+    if (typeof cookieDurationDays != 'number') { cookieDurationDays = 7; }
 
     let d = 24;
     let h = 60;
 
-    if (type = 'hour') { d = 1; }
-    if (type = 'minute') { d = 1; h = 1; }
+    if (type == 'hour') { d = 1; }
+    if (type == 'minute') { d = 1; h = 1; }
 
     let date = new Date();
     date.setTime(date.getTime() + (cookieDurationDays * d * h * 60 * 1000));
-    document.cookie = cookieName + '=' + cookieValue + ';' + 'expires=' + date.toUTCString() + ';path=/';
+    document.cookie = cookieName + '=' + JSON.stringify(cookieValue) + ';' + 'expires=' + date.toUTCString() + ';path=/';
   },
 
   get : function(cookieName) {
     cookieName = cookieName + '=';
-    let decodedCookie = document.cookie.split(';');
+    let decodedCookie = document.cookie.split('; ');
 
     for (let i = 0; i < decodedCookie.length; i++) {
-      let c = decodedCookie[i];
+      let cookie = decodedCookie[i];
 
-      while (c.charAt(0) == ' ') { c = c.substring(1); }
+      while (cookie.charAt(0) == ' ') { cookie = cookie.substring(1); }
 
-      if (c.indexOf(cookieName) == 0) { return c.substring(cookieName.length, c.length); }
+      if (cookie.indexOf(cookieName) == 0) { return JSON.parse(cookie.substring(cookieName.length, cookie.length)); }
     }
 
-    return '';
+    return undefined;
   },
 
   delete : function(cookieName) {
@@ -739,12 +772,10 @@ dpCookies.prototype = {
     document.cookie = cookieName + '=' + '' + ';' + 'expires=' + date.toUTCString() + ';path=/';
   },
 
-  setObj : function(obj, cookieDurationDays = 7, type = 'day') {
+  putObj : function(obj, cookieDurationDays = 7, type = 'day') {
     if (typeof(obj) !== 'object') { return false; }
 
-    for (let item in obj) {
-      this.set(item, JSON.stringify(obj[item]), cookieDurationDays = 7, type = 'day');
-    }
+    for (let item in obj) this.put(item, obj[item], cookieDurationDays, type);
   },
 
   getObj : function(obj) {
@@ -752,9 +783,7 @@ dpCookies.prototype = {
 
     let output = {}
 
-    for (let item in obj) {
-      output[item] = this.get(item);
-    }
+    for (let item in obj) { output[item] = this.get(item); }
 
     return output;
   },
@@ -762,9 +791,33 @@ dpCookies.prototype = {
   deleteObj : function(obj) {
     if (typeof(obj) !== 'object') { return false; }
 
-    for (let item in obj) {
-      this.delete(item);
+    for (let item in obj) { this.delete(item); }
+  },
+
+  getAll : function() {
+    let output = {};
+    const decodedCookie = document.cookie.split('; ');
+    
+    if (!decodedCookie[0]) { return output; }
+
+    for (let i = 0; i < decodedCookie.length; i++) {
+      let splitCookie = decodedCookie[i].split('=');
+
+      while (splitCookie[0].charAt(0) == ' ') { splitCookie[0] = splitCookie[0].substring(1); }
+
+      output[splitCookie[0]] = splitCookie[1];
+
+      for (let j = 2; j < splitCookie.length; j++) { output[splitCookie[0]] = output[splitCookie[0]] + '=' + splitCookie[j]; }
+
+      output[splitCookie[0]] = JSON.parse(output[splitCookie[0]]);
     }
+
+    return output;
+
+  },
+
+  deleteAll: function() {
+    this.deleteObj(this.getAll());
   }
   
 }
@@ -787,14 +840,22 @@ dpAJAX.prototype = {
   _progress : null,
 
   init : function(errorCallback, progressCallback) {
-    this._error = new dpSubject(null);
-    this._progress = new dpSubject({
+    this._error = new dpCallback(null);
+    this._progress = new dpCallback({
       loaded : 0,
       total : 0,
     });
 
     this.subError(errorCallback);
     this.subProgress(progressCallback)
+  },
+
+  destructor : function() {
+    this._error.destructor();
+    this._progress = undefined;
+    this._error.destructor();
+    this._progress = undefined;
+    delete this;
   },
 
   subError : function(callback) {
@@ -886,7 +947,7 @@ dpAJAX.prototype = {
   put : function(url, body, header, callback) {
     return this._baseCall(url, body, header, callback, 'PUT');
   },
-  
+
 }
 
 
@@ -915,6 +976,13 @@ dpEventsHandler.prototype = {
       this.populateEvents();
     });
     this._mutation.dpOnBody = false;
+  },
+
+  destructor : function() {
+    this._bodyFilter = null;
+    this._events = null;
+    this._mutation = null;
+    delete this;
   },
 
   add : function(type, query, callback) {
@@ -983,16 +1051,22 @@ dpEventsHandler.prototype = {
   * 
   * 
 **/
-function dpFrame(callbackOnStart) {
-  this.init(callbackOnStart);
+function dpFrame() {
+  this.init();
   this.init = undefined;
 }
 dpFrame.prototype = {
+  _isStopped : null,
   _isPaused : null,
   _startingTime : null,
   _lastTime : null,
   _totalElapsedTime : null,
   _elapsedSinceLastLoop : null,
+
+  _onStart : null,
+  onStart : function(value = null) {
+    if (typeof value == 'function') { this._onStart.subscribe(value); }
+  },
 
   _onUpdate : null,
   onUpdate : function(value = null) {
@@ -1004,43 +1078,63 @@ dpFrame.prototype = {
     if (typeof value == 'function') { this._onLateUpdate.subscribe(value); }
   },
 
-  init : function(callbackOnStart) {
+  init : function() {
+    this._isStopped = false;
     this._isPaused = false;
-    this._onUpdate = new dpSubject(null);
-    this._onLateUpdate = new dpSubject(null);
+    this._onStart = new dpCallback(null);
+    this._onUpdate = new dpCallback(null);
+    this._onLateUpdate = new dpCallback(null);
+  },
 
+  destructor : function() {
+    this.frame = function(){};
+    this._onStart.destructor();
+    this._onStart = undefined;
+    this._onUpdate.destructor();
+    this._onUpdate = undefined;
+    this._onLateUpdate.destructor();
+    this._onLateUpdate = undefined;
+    delete this;
+  },
+
+  start : function() { 
     requestAnimationFrame((currentTime) => {
-      if (!this._startingTime) { 
-        this._startingTime = currentTime;
-      }
-      if (!this._lastTime) {
-        this._lastTime = currentTime;
-      }
+      this.unpause();
+      this.unstop();
 
+      this._startingTime = currentTime;
+      this._lastTime = currentTime;
       this._totalElapsedTime = 0;
       this._elapsedSinceLastLoop = 0;
 
-      requestAnimationFrame((t) => {this.frame(t);});
+      if (this._onStart instanceof dpCallback) this._onStart.next(0);
 
-      if (typeof callbackOnStart == 'function') { callbackOnStart(); }
+      requestAnimationFrame((t) => {this.frame(t);});
     });
   },
 
   frame : function(currentTime) {
-    if (this._isPaused) {
+    if (this._isStopped) {
       requestAnimationFrame((t) => {this.frame(t);});
-      return null;
+      return;
     }
 
     this._totalElapsedTime = currentTime - this._startingTime;
     this._elapsedSinceLastLoop = currentTime - this._lastTime;
 
     this._lastTime = currentTime;
-
     this._onUpdate.next(this._elapsedSinceLastLoop);
     this._onLateUpdate.next(this._elapsedSinceLastLoop);
 
     requestAnimationFrame((t) => {this.frame(t);});
+  },
+
+  stop : function() {
+    this._isStopped = true;
+  },
+
+  unstop : function() {
+    this._isStopped = false;
   },
 
   pause : function() {
@@ -1269,7 +1363,11 @@ dpCanvas2dCtx.prototype = {
   ctxActive: null,
 
   init : function() { 
-    this.onLoadEvent = new dpSubject();
+    this.onLoadEvent = new dpCallback();
+  },
+
+  destructor : function() {
+    delete this;
   },
 
   onLoad: function(callback) {
@@ -1406,6 +1504,13 @@ dpImageProcessing.prototype = {
     if (typeof callback == 'function') {
       this.onLoad(callback);
     }
+  },
+
+  destructor : function() {
+    this.kelvinTable = undefined;
+    this.dpCtx.destructor();
+    this.dpCtx = undefined;
+    delete this;
   },
 
   onLoad : function(callback) { 
@@ -2096,7 +2201,7 @@ dpImageProcessing.prototype = {
 
 
 dp.main(function() {
-  dp.cookies = new dpCookies();
+  dp.cookie = new dpCookie();
   dp.ajax = new dpAJAX();
   dp.events = new dpEventsHandler();
   dp.frame = new dpFrame();

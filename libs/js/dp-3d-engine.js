@@ -38,12 +38,6 @@ dpVerifyES6(true);
 
 
 
-// *********************** 
-// 3D-Engine ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// *********************** 
-
-
-
 class dp3dEngineBase {
 
   _index;
@@ -182,6 +176,14 @@ class dp3dEngineBase {
 
     this._view = tag;
   }
+
+  _destroy() {
+    this._index = undefined;
+    this._gl = undefined;
+    this._program = undefined;
+    this._programInfo = undefined;
+    this._view = undefined;
+  }
   
 }
 
@@ -202,17 +204,14 @@ class dp3dEngine extends dp3dEngineBase {
     super(index);
 
     this._ajax = new dpAJAX();
+    this._time = new dpFrame();
 
     this.loadView(this._view);
 
-    let resizeCanvas = () => {
+    this._time.onStart(() => {
       this.gl.canvas.width = this.gl.canvas.clientWidth;
       this.gl.canvas.height = this.gl.canvas.clientHeight;
       this.gl.viewport(0, 0, this.gl.canvas.clientWidth, this.gl.canvas.clientHeight);
-    }
-
-    this._time = new dpFrame(() => {
-      resizeCanvas();
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
     });
 
@@ -224,8 +223,19 @@ class dp3dEngine extends dp3dEngineBase {
     const positionLocation = this.gl.getAttribLocation(this.program, `vertexPosition`);
     this.gl.enableVertexAttribArray(positionLocation);
     this.gl.vertexAttribPointer(positionLocation, 3, this.gl.FLOAT, false, 0, 0);
+
+    this._time.start();
   }
 
   // Override
   loadView(ele) { }
+
+  destructor() {
+    this._destroy();
+    this._ajax.destructor();
+    this._ajax = undefined;
+    this._time.destructor();
+    this._time = undefined;
+    delete this;
+  }
 }

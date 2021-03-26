@@ -8,9 +8,9 @@
   * @Link GitHub: https://github.com/darkoxv88
   * @Link CodeForces: https://codeforces.com/profile/darkoxv88
 
-	* @fileoverview main.js provides a demo of dp-utility.js and dp-3d-engine.js
+	* @fileoverview dp-webgl-image-processing.js
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.0.0
+  * @version 0.0.1
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,48 +36,16 @@
 
 dpVerifyES6(true);
 
-class Engine extends dp3dEngine {
-  loadView(ele) {
-    let view = dp.$('<app-display>')[0];
-    view.innerHTML = '';
-    view.append(ele);
+
+
+class dpWebglImageProcessing { 
+
+	constructor() {
+
+	}
+
+	destructor() {
+    delete this;
   }
+
 }
-
-var index = {
-  test : null,
-
-  init : function() {
-    dp.$('<app-display>')[0].innerHTML = `
-      <input style="margin: 6px;" load-img type="file"></input>
-      <img id="org-img" style="margin: 6px;" width="400px" height="auto"></img>
-      <img id="test-img" style="margin: 6px;" width="400px" height="auto"></img>
-    `;
-
-    this.test = new dpImageProcessing(() => {
-      this.test.temperature(6200);
-      this.test.lightness(7);
-      this.test.gamma(1.15)
-      this.test.hue(38)
-      this.test.flipImage(true, false);
-      this.test.rotateImage(true);
-      this.test.saturation(-3);
-      this.test.highpass(3);
-      this.test.noise(5);
-      this.test.reset();
-      console.log(this.test.histogram());
-      dp.$("#org-img").src  = this.test.getOrgImg();
-      dp.$("#test-img").src = this.test.getImg();
-    });
-  },
-};
-
-dp.main(function() {
-
-});
-
-dp.onLoad(function() {
-  dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event) });
-  index.init();
-  //(new Engine(1)).destructor();
-});
