@@ -34,8 +34,6 @@
 
 "use strict";
 
-dpVerifyES6(true);
-
 class Engine extends dp3dEngine {
   loadView(ele) {
     let view = dp.$('<app-display>')[0];
@@ -79,5 +77,5 @@ dp.main(function() {
 dp.onLoad(function() {
   dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event) });
   index.init();
-  //(new Engine(1)).destructor();
+  let a = new Engine(1);
 });
