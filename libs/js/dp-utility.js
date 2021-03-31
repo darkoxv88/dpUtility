@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.0.8
+  * @version 1.1.0
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -41,41 +41,55 @@ window.dp = undefined;
 	* @function
   * Verifies if browser supports ES6 (ECMAScript 2015).
   * If the browser supports ES6, it will return true.
-  * @param {boolean} kill
-  * If the test fails and kill is set to true it will then throw an error and if called in global scope it will kill the script.
 **/
-
-function dpVerifyES6(kill) {
-  var output = false;
-
+function dpVerifyES6() {
   try {
-    eval(''
+    new Function(''
       + 'class dpStaticTest { static test = true; };'
       + 'class dpFoo { _test; get test() { return this._test; }; set test(value) { this._test = value; }; constructor(i) { this.test = i; }; };'
       + 'class dpBar extends dpFoo { constructor() { super(`1`); }; }'
-      + 'const asyncTest = async (x = new dpFoo()) => { let promise = new Promise(resolve => { resolve(x); }); await promise; };'
-      + 'asyncTest();'
-      + 'output = dpStaticTest.test;'
+      + 'const test = (x = new dpFoo()) => { let y = 1; return x; };'
     );
   } catch (err) {
-    if (kill) {
-      throw new Error(err); 
-    } else {
-      console.error(err);
-      return false;
-    }
+    console.error(err);
+    
+    return false;
   }
 
-  return output;
+  return true;
+}
+
+/**	
+  * @name dpVerifyES7()
+	* @function
+  * Verifies if browser supports ES7 (ECMAScript 2016).
+  * If the browser supports ES7, it will return true.
+**/
+function dpVerifyES7() {
+  try {
+    new Function(''
+      + 'async function asyncTest(x) { var promise = new Promise(function(resolve) { resolve(x); }); return promise; };'
+      + 'async function awaitTest() { return await asyncTest(true); };'
+    );
+  } catch (err) {
+    console.error(err);
+
+    return false;
+  }
+
+  return true;
 }
 
 var dpConst = {
-  supportsES6 : dpVerifyES6(true),
+  supportsES6 : dpVerifyES6(),
+  supportsES7 : dpVerifyES7(),
   epsilon : 0.000001,
   floatArray : (typeof Float32Array !== 'undefined') ? Float32Array : Array,
 }
 
 Object.freeze(dpConst);
+
+if (!dpConst.supportsES6 || !dpConst.supportsES7) throw new Error('Insufficient feature support!');
 
 /**
   * @name dp
@@ -197,6 +211,19 @@ var dp = new function() {
       callback(k, obj[k]);
     }
   };
+
+  this.functionWrapper = function(func, onError) {
+    if (typeof func !== 'function') throw new TypeError('parameter "func" needs to be a function.')
+
+    return function() {
+      try {
+        return func.apply(this, arguments);
+      } catch (e) {
+        if (typeof onError === 'function') onError(e);
+        throw e;
+      }
+    }
+  }
 
   /**
     * @name main
@@ -628,17 +655,35 @@ var dpVec4 = new function() {
 
 
 /**
-  * @name dpMat2x2
+  * @name dpMat2
 	* @class
   * 
   * 
 **/
-var dpMat2x2 = new function() {
+var dpMat2 = new function() {
 
   this._array = dpConst.floatArray;
 
   this.empty = function() {
     return new this._array(4);
+  }
+
+}
+
+
+
+/**
+  * @name dpMat3
+	* @class
+  * 
+  * 
+**/
+var dpMat3 = new function() {
+
+  this._array = dpConst.floatArray;
+
+  this.empty = function() {
+    return new this._array(9);
   }
 
 }
@@ -707,6 +752,189 @@ dpCallback.prototype = {
   getValue : function() {
     return this._value;
   },
+
+}
+
+
+
+/**
+  * @name dpObserver
+	* @class
+  * 
+  * 
+**/
+function dpObserver(index, call, error) {
+  this.init(index, call, error);
+  this.init = undefined;
+}
+dpObserver.prototype = {
+
+  _index : null,
+  _onCall : null,
+
+  init : function(index, call, error) {
+    this._index = index;
+    this._onCall = this._wrappObserver(call, error);
+  },
+
+  destructor : function() {
+    this._index = undefined;
+    this._onCall = undefined;
+    delete this;
+  },
+
+  _wrappObserver : function(onCall, onError) {
+    if (typeof onCall !== 'function') return function() { }
+
+    return function() {
+      try {
+        onCall.apply(this, arguments);
+      } catch (e) {
+        if (typeof onError === 'function') onError(e);
+        throw e;
+      }
+    }
+  },
+
+  call : function(data) {
+    this._onCall(data);
+  },
+
+  observing : function() {
+    if (!this._index && this._index !== 0) return false;
+    return true;
+  },
+
+  unsubscribe : function() {
+    this._index = null;
+    this._onCall = null;;
+  },
+
+}
+
+
+
+/**
+  * @name dpSubject
+	* @class
+  * 
+  * 
+**/
+function dpSubject(value) {
+  this.init(value);
+  this.init = undefined;
+}
+dpSubject.prototype = {
+
+  _value : null,
+  _pipe : null,
+  _observers : null,
+  _onError : null,
+  _onComplete : null,
+
+  init : function(value) {
+    this._value = value;
+    this._pipe = null;
+    this._observers = [];
+    this._onError = null;
+    this._onComplete = null;
+  },
+
+  destructor : function() {
+    this._value = undefined;
+    this._pipe = undefined;
+    this._onError = undefined;
+    this._onComplete = undefined;
+
+    for (let i = 0; i < this._observers.length; i++) {
+      if (this._observers[i] instanceof dpObserver == true) this._observers[i].destructor();
+      this._observers[i] = undefined;
+    }
+
+    this._observers = undefined;
+    delete this;
+  },
+
+  getValue : function() {
+    return this._value;
+  },
+
+  pipe : function(pipe, onError) {
+    this._pipe = function(value) {
+      if (typeof pipe !== 'function') return value;
+
+      try {
+        return pipe(value);
+      } catch(err) {
+        if (typeof onError === 'function') onError(value);
+        return value;
+      }
+    }
+  },
+
+  onError : function(func) {
+    if (typeof func === 'function') this._onError = func;
+  },
+
+  onComplete : function(func) {
+    if (typeof func === 'function') this._onComplete = func;
+  },
+
+  subscribe : function(update, error) {
+    let len = this._observers.length;
+    this._observers.push(new dpObserver(len, update, error));
+    return this._observers[len];
+  },
+
+  fireObservers : function(value) {
+    this._value = value;
+
+    if (typeof this._pipe === 'function') this._value = this._pipe(this._value);
+
+    for (let i = 0; i < this._observers.length; i++) {
+      if (this._observers[i] instanceof dpObserver !== true) {
+        this._observers[i].destructor();
+        this._observers.splice(i, 1);
+        
+        i -= 1;
+
+        continue;
+      }
+
+      if (!this._observers[i].observing()) {
+        this._observers[i].destructor();
+        this._observers.splice(i, 1);
+
+        i -= 1;
+
+        continue;
+      }
+
+      try { 
+        this._observers[i].call(this._value);
+      } catch(err) {
+        console.error(err);
+        if (typeof this._onError === 'function') this._onError(err)
+      } finally {
+        continue;
+      }
+    }
+
+    try { 
+      if (typeof this._onComplete === 'function') this._onComplete(this._value);
+    } catch(err) {
+      console.error(err);
+      if (typeof this._onError === 'function') this._onError(err);
+    }
+  },
+
+  next : function(value) {
+    this._value = value;
+
+    if (typeof this._pipe === 'function') this._value = this._pipe(this._value);
+
+    this.fireObservers();
+  }
 
 }
 
@@ -1064,26 +1292,26 @@ dpFrame.prototype = {
   _elapsedSinceLastLoop : null,
 
   _onStart : null,
-  onStart : function(value = null) {
-    if (typeof value == 'function') { this._onStart.subscribe(value); }
+  onStart : function(onCall, onError) {
+    if (typeof onCall == 'function') { this._onStart.subscribe(onCall, onError); }
   },
 
   _onUpdate : null,
-  onUpdate : function(value = null) {
-    if (typeof value == 'function') { this._onUpdate.subscribe(value); }
+  onUpdate : function(onCall, onError) {
+    if (typeof onCall == 'function') { this._onUpdate.subscribe(onCall, onError); }
   },
 
   _onLateUpdate : null,
-  onLateUpdate : function(value = null) {
-    if (typeof value == 'function') { this._onLateUpdate.subscribe(value); }
+  onLateUpdate : function(onCall, onError) {
+    if (typeof onCall == 'function') { this._onLateUpdate.subscribe(onCall, onError); }
   },
 
   init : function() {
     this._isStopped = false;
     this._isPaused = false;
-    this._onStart = new dpCallback(null);
-    this._onUpdate = new dpCallback(null);
-    this._onLateUpdate = new dpCallback(null);
+    this._onStart = new dpSubject(0);
+    this._onUpdate = new dpSubject(0);
+    this._onLateUpdate = new dpSubject(0);
   },
 
   destructor : function() {
@@ -1107,7 +1335,7 @@ dpFrame.prototype = {
       this._totalElapsedTime = 0;
       this._elapsedSinceLastLoop = 0;
 
-      if (this._onStart instanceof dpCallback) this._onStart.next(0);
+      if (this._onStart instanceof dpSubject) this._onStart.next(0);
 
       requestAnimationFrame((t) => {this.frame(t);});
     });
@@ -1119,13 +1347,14 @@ dpFrame.prototype = {
       return;
     }
 
+    
     this._totalElapsedTime = currentTime - this._startingTime;
     this._elapsedSinceLastLoop = currentTime - this._lastTime;
-
+    
     this._lastTime = currentTime;
     this._onUpdate.next(this._elapsedSinceLastLoop);
     this._onLateUpdate.next(this._elapsedSinceLastLoop);
-
+    
     requestAnimationFrame((t) => {this.frame(t);});
   },
 
