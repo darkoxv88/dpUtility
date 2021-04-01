@@ -34,8 +34,6 @@
 
 "use strict";
 
-dpVerifyES6(true);
-
 
 
 class dp3dEngineBase {
