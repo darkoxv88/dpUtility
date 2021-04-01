@@ -62,7 +62,6 @@ var index = {
       this.test.saturation(-3);
       this.test.highpass(3);
       this.test.noise(5);
-      this.test.reset();
       console.log(this.test.histogram());
       dp.$("#org-img").src  = this.test.getOrgImg();
       dp.$("#test-img").src = this.test.getImg();
@@ -77,5 +76,6 @@ dp.main(function() {
 dp.onLoad(function() {
   dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event) });
   index.init();
-  let a = new Engine(1);
+  //let a = new Engine(1);
+  //a.destructor();
 });

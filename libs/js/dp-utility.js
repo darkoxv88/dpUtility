@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.1.0
+  * @version 1.1.1
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -141,7 +141,6 @@ var dp = new function() {
     * @param {string} value
 
     * If the string starts with '#' it will search by id attribute.
-    * If the string starts with '&' it will search by name attribute.
     * If the string starts with '.' it will search by class attribute.
     * If the string is in HTML tag format '<>' it will search all DOM elements as that tag.
     * Everything else will use generic query selector.
@@ -149,43 +148,39 @@ var dp = new function() {
     * @param {Element} target
     * If the target is of type Element it wil perform querySelectorAll on its chields and grandchields
     * 
-    * @returns HTMLElement | HTMLCollectionOf<Element> | NodeListOf<Element>
+    * @returns Element | HTMLCollectionOf<Element> | NodeListOf<Element>
   **/
    this.$ = function(value, target) {
     if (typeof value != 'string' || !value) return null;
-  
+
     let firstChar = value[0];
-    let subFirst = value.substr(1);
 
     let validateTarge = function(t) {
       if (!t) return false;
       if (t instanceof Element !== true) return false;
-      if (!t.getElementsByClassName) return false;
-      if (!t.getElementsByTagName) return false;
-      if (!t.querySelectorAll) return false;
       return true;
     }(target);
   
-    if (firstChar == '#') {
-      return document.getElementById(subFirst);
-    }
-
-    if (firstChar == '&') { 
-      return document.getElementsByName(subFirst);
-    }
-  
-    if (firstChar == '.') {
-      if (validateTarge) return target.getElementsByClassName(subFirst);
-      return document.getElementsByClassName(subFirst);
-    }
-  
     if (firstChar == '<') {
+      let subFirst = value.substr(1);
+
       if (validateTarge) return target.getElementsByTagName(subFirst.substr(0, subFirst.length-1));
       return document.getElementsByTagName(subFirst.substr(0, subFirst.length-1));
     }
+
+    let query;
   
-    if (validateTarge) return target.querySelectorAll(value);
-    return document.querySelectorAll(value);
+    if (validateTarge) {
+      query = target.querySelectorAll(value);
+    }else {
+      query = document.querySelectorAll(value);
+    }
+
+    if (firstChar == '#') {
+      if (query[0]) return query[0];
+    }
+
+    return query;
   };
 
   /**
@@ -212,15 +207,24 @@ var dp = new function() {
     }
   };
 
+    /**
+    * @name functionWrapper
+    * @function
+    * Wrappes the given function in try-catch block.
+    * @param {object} func
+    * Function to wrapp.
+    * @param {function} onError
+    * Function that is called if an error happens.
+  **/
   this.functionWrapper = function(func, onError) {
-    if (typeof func !== 'function') throw new TypeError('parameter "func" needs to be a function.')
+    if (typeof func !== 'function') throw new TypeError('parameter "func" needs to be a function.');
 
     return function() {
       try {
         return func.apply(this, arguments);
       } catch (e) {
-        if (typeof onError === 'function') onError(e);
-        throw e;
+        if (typeof onError === 'function') return onError(e);
+        return null;
       }
     }
   }
@@ -336,19 +340,17 @@ var dp = new function() {
     * @param {number} val
   **/
   this.byte = function(val) { 
-    if (!val) { return 0; }
-
     try {
       val = parseInt(val);
+
+      if (val > 255) { return 255; }
+      if (val < 0) { return 0; }
+
+      return val;
     } catch(error) {
-      console.error('Value: ' + val + ' cant be parsed to int.' + ' --> ', error);
+      console.error(error);
       return 0;
     }
-
-    if (val > 255) { return 255; }
-    if (val < 0) { return 0; }
-
-    return val;
   }
 
   /**
@@ -373,33 +375,31 @@ var dp = new function() {
     }
   }
 
+  /**
+    * @name maxCap
+    * @returns {number}
+    * @function
+    * If the given value exceeds the cap, it will return the cap.
+    * @param {number} value
+    * @param {number} cap
+  **/
   this.maxCap = function(value, cap) {
-    if (typeof(value) !== 'number') { 
-      console.error('value: ' + value + ' is not a number');
-      return;
-    }
-    if (typeof(cap) !== 'number') { 
-      console.error('cap: ' + cap + ' is not a number');
-      return;
-    }
-
-    if (value > cap) { value = cap; }
-
+    if (typeof(value) !== 'number' || typeof(cap) !== 'number') throw new TypeError(value + ' OR ' + cap + ' is not a number');
+    if (value > cap) return cap;
     return value;
   }
   
+    /**
+    * @name minCap
+    * @returns {number}
+    * @function
+    * If the given value is lower than the cap, it will return the cap.
+    * @param {number} value
+    * @param {number} cap
+  **/
   this.minCap = function(value, cap) {
-    if (typeof(value) !== 'number') { 
-      console.error('value: ' + value + ' is not a number');
-      return;
-    }
-    if (typeof(cap) !== 'number') { 
-      console.error('cap: ' + cap + ' is not a number');
-      return;
-    }
-
-    if (value < cap) { value = cap; }
-
+    if (typeof(value) !== 'number' || typeof(cap) !== 'number') throw new TypeError(value + ' OR ' + cap + ' is not a number');
+    if (value < cap) return cap;
     return value;
   }
 
@@ -431,6 +431,251 @@ var dp = new function() {
   this.ajax = null;
   this.events = null;
   this.frame = null;
+
+}
+
+
+
+/**
+  * @name dpCallback
+	* @class
+  * 
+  * 
+**/
+function dpCallback(value, sub, error) {
+  this.init(value, sub, error);
+  this.init = undefined;
+}
+dpCallback.prototype = {
+
+  _value : null,
+  _call : null,
+  _onError : null,
+
+  init : function(value, sub, error) {
+    this._value = value;
+    this.subscribe(sub);
+    this.onError(error);
+  },
+
+  destructor : function() {
+    this._value = undefined;
+    this._call = undefined;
+    delete this;
+  },
+
+  onError : function(func) {
+    if (!func || typeof(func) !== 'function') return;
+    this._onError = func;
+  },
+
+  subscribe : function(callback) { 
+    if (!callback || typeof(callback) !== 'function') return;
+    this._call = callback;
+  },
+
+  unsubscribe : function() { 
+    this._call = null;
+    this._onError = null;
+  },
+
+  reset : function() {
+    this._value = null;
+    this.unsubscribe();
+  },
+
+  fireEvent : function() {
+    try {
+      if (typeof(this._call) === 'function') this._call(this._value);
+    } catch(err) {
+      console.error(err); 
+      if (typeof(this._onError) === 'function') this._onError(err);
+    }
+  },
+
+  next : function(value) {
+    this._value = value;
+    this.fireEvent();
+  },
+
+  getValue : function() {
+    return this._value;
+  },
+
+}
+
+
+
+/**
+  * @name dpObserver
+	* @class
+  * 
+  * 
+**/
+function dpObserver(index, call, error) {
+  this.init(index, call, error);
+  this.init = undefined;
+}
+dpObserver.prototype = {
+
+  _index : null,
+  _onCall : null,
+
+  init : function(index, call, error) {
+    this._index = index;
+    this._onCall = this._wrappObserver(call, error);
+  },
+
+  destructor : function() {
+    this._index = undefined;
+    this._onCall = undefined;
+    delete this;
+  },
+
+  _wrappObserver : function(onCall, onError) {
+    if (typeof onCall !== 'function') return function() { }
+
+    return function() {
+      try {
+        onCall.apply(this, arguments);
+      } catch (e) {
+        if (typeof onError === 'function') onError(e);
+        throw e;
+      }
+    }
+  },
+
+  call : function(data) {
+    this._onCall(data);
+  },
+
+  observing : function() {
+    if (!this._index && this._index !== 0) return false;
+    return true;
+  },
+
+  unsubscribe : function() {
+    this._index = null;
+    this._onCall = null;;
+  },
+
+}
+
+
+
+/**
+  * @name dpSubject
+	* @class
+  * 
+  * 
+**/
+function dpSubject(value) {
+  this.init(value);
+  this.init = undefined;
+}
+dpSubject.prototype = {
+
+  _value : null,
+  _pipe : null,
+  _observers : null,
+  _onError : null,
+  _onComplete : null,
+
+  init : function(value) {
+    this._value = value;
+    this._pipe = null;
+    this._observers = [];
+    this._onError = null;
+    this._onComplete = null;
+  },
+
+  destructor : function() {
+    this._value = undefined;
+    this._pipe = undefined;
+    this._onError = undefined;
+    this._onComplete = undefined;
+
+    for (let i = 0; i < this._observers.length; i++) {
+      if (this._observers[i] instanceof dpObserver == true) this._observers[i].destructor();
+      this._observers[i] = undefined;
+    }
+
+    this._observers = undefined;
+    delete this;
+  },
+
+  getValue : function() {
+    return this._value;
+  },
+
+  pipe : function(pipe, onError) {
+    this._pipe = function(value) {
+      if (typeof pipe !== 'function') return value;
+
+      try {
+        return pipe(value);
+      } catch(err) {
+        if (typeof onError === 'function') onError(value);
+        return value;
+      }
+    }
+  },
+
+  onError : function(func) {
+    if (typeof func === 'function') this._onError = func;
+  },
+
+  onComplete : function(func) {
+    if (typeof func === 'function') this._onComplete = func;
+  },
+
+  subscribe : function(update, error) {
+    let len = this._observers.length;
+    this._observers.push(new dpObserver(len, update, error));
+    return this._observers[len];
+  },
+
+  fireObservers : function() {
+    for (let i = 0; i < this._observers.length; i++) {
+      if (this._observers[i] instanceof dpObserver !== true) {
+        this._observers[i].destructor();
+        this._observers.splice(i, 1);
+        i -= 1;
+        continue;
+      }
+
+      if (!this._observers[i].observing()) {
+        this._observers[i].destructor();
+        this._observers.splice(i, 1);
+        i -= 1;
+        continue;
+      }
+
+      try { 
+        this._observers[i].call(this._value);
+      } catch(err) {
+        console.error(err);
+        if (typeof this._onError === 'function') this._onError(err)
+      } finally {
+        continue;
+      }
+    }
+
+    try { 
+      if (typeof this._onComplete === 'function') this._onComplete(this._value);
+    } catch(err) {
+      console.error(err);
+      if (typeof this._onError === 'function') this._onError(err);
+    }
+  },
+
+  next : function(value) {
+    this._value = value;
+
+    if (typeof this._pipe === 'function') this._value = this._pipe(this._value);
+
+    this.fireObservers();
+  },
 
 }
 
@@ -691,256 +936,6 @@ var dpMat3 = new function() {
 
 
 // *********************** 
-// Helper ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// *********************** 
-
-
-
-/**
-  * @name dpCallback
-	* @class
-  * 
-  * 
-**/
-function dpCallback(value, sub = null) {
-  this.init(value, sub);
-  this.init = undefined;
-}
-dpCallback.prototype = {
-
-  _value : null,
-  _call : null,
-
-  init : function(value, sub) {
-    this._value = value;
-    this.subscribe(sub);
-  },
-
-  destructor : function() {
-    this._value = undefined;
-    this._call = undefined;
-    delete this;
-  },
-
-  subscribe : function(callback) { 
-    if (!callback) return;
-    if (typeof(callback) !== 'function')  return;
-    this._call = callback;
-  },
-
-  unsubscribe : function() { 
-    this._call = null;
-  },
-
-  reset : function() {
-    this._value = null;
-    this.unsubscribe();
-  },
-
-  fireEvent : function() {
-    try {
-      if (typeof(this._call) !== 'function') { return; }
-      this._call(this._value);
-    } catch(err) { console.error(err); }
-  },
-
-  next : function(value) {
-    this._value = value;
-    this.fireEvent();
-  },
-
-  getValue : function() {
-    return this._value;
-  },
-
-}
-
-
-
-/**
-  * @name dpObserver
-	* @class
-  * 
-  * 
-**/
-function dpObserver(index, call, error) {
-  this.init(index, call, error);
-  this.init = undefined;
-}
-dpObserver.prototype = {
-
-  _index : null,
-  _onCall : null,
-
-  init : function(index, call, error) {
-    this._index = index;
-    this._onCall = this._wrappObserver(call, error);
-  },
-
-  destructor : function() {
-    this._index = undefined;
-    this._onCall = undefined;
-    delete this;
-  },
-
-  _wrappObserver : function(onCall, onError) {
-    if (typeof onCall !== 'function') return function() { }
-
-    return function() {
-      try {
-        onCall.apply(this, arguments);
-      } catch (e) {
-        if (typeof onError === 'function') onError(e);
-        throw e;
-      }
-    }
-  },
-
-  call : function(data) {
-    this._onCall(data);
-  },
-
-  observing : function() {
-    if (!this._index && this._index !== 0) return false;
-    return true;
-  },
-
-  unsubscribe : function() {
-    this._index = null;
-    this._onCall = null;;
-  },
-
-}
-
-
-
-/**
-  * @name dpSubject
-	* @class
-  * 
-  * 
-**/
-function dpSubject(value) {
-  this.init(value);
-  this.init = undefined;
-}
-dpSubject.prototype = {
-
-  _value : null,
-  _pipe : null,
-  _observers : null,
-  _onError : null,
-  _onComplete : null,
-
-  init : function(value) {
-    this._value = value;
-    this._pipe = null;
-    this._observers = [];
-    this._onError = null;
-    this._onComplete = null;
-  },
-
-  destructor : function() {
-    this._value = undefined;
-    this._pipe = undefined;
-    this._onError = undefined;
-    this._onComplete = undefined;
-
-    for (let i = 0; i < this._observers.length; i++) {
-      if (this._observers[i] instanceof dpObserver == true) this._observers[i].destructor();
-      this._observers[i] = undefined;
-    }
-
-    this._observers = undefined;
-    delete this;
-  },
-
-  getValue : function() {
-    return this._value;
-  },
-
-  pipe : function(pipe, onError) {
-    this._pipe = function(value) {
-      if (typeof pipe !== 'function') return value;
-
-      try {
-        return pipe(value);
-      } catch(err) {
-        if (typeof onError === 'function') onError(value);
-        return value;
-      }
-    }
-  },
-
-  onError : function(func) {
-    if (typeof func === 'function') this._onError = func;
-  },
-
-  onComplete : function(func) {
-    if (typeof func === 'function') this._onComplete = func;
-  },
-
-  subscribe : function(update, error) {
-    let len = this._observers.length;
-    this._observers.push(new dpObserver(len, update, error));
-    return this._observers[len];
-  },
-
-  fireObservers : function(value) {
-    this._value = value;
-
-    if (typeof this._pipe === 'function') this._value = this._pipe(this._value);
-
-    for (let i = 0; i < this._observers.length; i++) {
-      if (this._observers[i] instanceof dpObserver !== true) {
-        this._observers[i].destructor();
-        this._observers.splice(i, 1);
-        
-        i -= 1;
-
-        continue;
-      }
-
-      if (!this._observers[i].observing()) {
-        this._observers[i].destructor();
-        this._observers.splice(i, 1);
-
-        i -= 1;
-
-        continue;
-      }
-
-      try { 
-        this._observers[i].call(this._value);
-      } catch(err) {
-        console.error(err);
-        if (typeof this._onError === 'function') this._onError(err)
-      } finally {
-        continue;
-      }
-    }
-
-    try { 
-      if (typeof this._onComplete === 'function') this._onComplete(this._value);
-    } catch(err) {
-      console.error(err);
-      if (typeof this._onError === 'function') this._onError(err);
-    }
-  },
-
-  next : function(value) {
-    this._value = value;
-
-    if (typeof this._pipe === 'function') this._value = this._pipe(this._value);
-
-    this.fireObservers();
-  }
-
-}
-
-
-
-// *********************** 
 // General ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // *********************** 
 
@@ -1160,20 +1155,8 @@ dpAJAX.prototype = {
     return this._baseCall(url, null, header, callback, 'GET');
   },
 
-  delete : function(url, header, callback) {
-    return this._baseCall(url, null, header, callback, 'DELETE');
-  },
-
   post : function(url, body, header, callback) {
     return this._baseCall(url, body, header, callback, 'POST');
-  },
-
-  update : function(url, body, header, callback) {
-    return this._baseCall(url, body, header, callback, 'UPDATE');
-  },
-
-  put : function(url, body, header, callback) {
-    return this._baseCall(url, body, header, callback, 'PUT');
   },
 
 }
@@ -1260,7 +1243,9 @@ dpEventsHandler.prototype = {
       const e = this._events[k];
       const elements =  dp.$(e.query);
 
-      if (elements instanceof HTMLElement) {
+      if (!elements) continue;
+
+      if (elements instanceof Element) {
         setEvent(elements, e.type, e.callback);
         continue;
       }
@@ -1315,6 +1300,7 @@ dpFrame.prototype = {
   },
 
   destructor : function() {
+    this.start = function(){};
     this.frame = function(){};
     this._onStart.destructor();
     this._onStart = undefined;
@@ -1337,25 +1323,28 @@ dpFrame.prototype = {
 
       if (this._onStart instanceof dpSubject) this._onStart.next(0);
 
-      requestAnimationFrame((t) => {this.frame(t);});
+      requestAnimationFrame((t) => this.frame(t));
     });
   },
 
   frame : function(currentTime) {
     if (this._isStopped) {
-      requestAnimationFrame((t) => {this.frame(t);});
+      requestAnimationFrame((t) => this.frame(t));
       return;
     }
 
-    
     this._totalElapsedTime = currentTime - this._startingTime;
     this._elapsedSinceLastLoop = currentTime - this._lastTime;
-    
     this._lastTime = currentTime;
-    this._onUpdate.next(this._elapsedSinceLastLoop);
-    this._onLateUpdate.next(this._elapsedSinceLastLoop);
     
-    requestAnimationFrame((t) => {this.frame(t);});
+    let deltaTime = this._elapsedSinceLastLoop;
+    
+    if (this._isPaused) deltaTime = 0;
+
+    this._onUpdate.next(deltaTime);
+    this._onLateUpdate.next(deltaTime);
+    
+    requestAnimationFrame((t) => this.frame(t));
   },
 
   stop : function() {
@@ -1471,11 +1460,8 @@ var dpColor = new function()  {
   
     if (max == min) return {h: h, s: s, l: l};
 
-    if (l < 0.5) { 
-      s = del / ( max + min )
-    } else { 
-      s = del / ( 2 - max - min ); 
-    };
+    if (l < 0.5)  s = del / ( max + min )
+    else          s = del / ( 2 - max - min ); 
 
     let delR = ( ( ( max - r ) / 6 ) + ( del / 2 ) ) / del;
     let delG = ( ( ( max - g ) / 6 ) + ( del / 2 ) ) / del;
@@ -1500,29 +1486,29 @@ var dpColor = new function()  {
       r = l * 255;
       g = l * 255;
       b = l * 255;
+
+      return dp.rgba(r, g, b);
     }
-    else
-    {
-      if (l < 0.5) val2 = l * ( 1 + s );
-      else           val2 = ( l + s ) - ( l * s );
+
+    if (l < 0.5)  val2 = l * ( 1 + s );
+    else          val2 = ( l + s ) - ( l * s );
     
-      val1 = 2 * l - val2;
+    val1 = 2 * l - val2;
 
-      let Hue_2_RGB = function( v1, v2, vH ) {
-        if (vH < 0) vH += 1;
-        if (vH > 1) vH -= 1;
+    let Hue_2_RGB = function( v1, v2, vH ) {
+      if (vH < 0) vH += 1;
+      if (vH > 1) vH -= 1;
 
-        if ( ( 6 * vH ) < 1 ) return ( v1 + ( v2 - v1 ) * 6 * vH );
-        if ( ( 2 * vH ) < 1 ) return ( v2 );
-        if ( ( 3 * vH ) < 2 ) return ( v1 + ( v2 - v1 ) * ( ( 2 / 3 ) - vH ) * 6 );
+      if ((6 * vH) < 1) return (v1 + (v2 - v1) * 6 * vH);
+      if ((2 * vH) < 1) return v2;
+      if ((3 * vH) < 2) return (v1 + (v2 - v1) * ((2 / 3) - vH) * 6);
 
-        return ( v1 );
-      };
+      return ( v1 );
+    };
     
-      r = 255 * Hue_2_RGB(val1, val2, h + ( 1 / 3 ));
-      g = 255 * Hue_2_RGB(val1, val2, h );
-      b = 255 * Hue_2_RGB(val1, val2, h - ( 1 / 3 ));
-    }
+    r = 255 * Hue_2_RGB(val1, val2, h + (1 / 3));
+    g = 255 * Hue_2_RGB(val1, val2, h);
+    b = 255 * Hue_2_RGB(val1, val2, h - (1 / 3));
 
     return dp.rgba(r, g, b);
   }
@@ -1533,12 +1519,12 @@ var dpColor = new function()  {
     try {
       value = parseInt(value);
     } catch(error) {
-      console.error(`Value: ${value} cant be parsed to int.`, error)
+      console.error(error);
       return;
     }
 
-    if(value <= 0) { value = 1 ;}
-    if(value > 1000000) { value = 1000000 ;}
+    if (value <= 0) value = 1;
+    if (value > 1000000) value = 1000000;
 
     value /= 100;
 
@@ -1596,6 +1582,8 @@ dpCanvas2dCtx.prototype = {
   },
 
   destructor : function() {
+    this.img = undefined;
+    this.imgData = undefined;
     delete this;
   },
 
@@ -1608,30 +1596,48 @@ dpCanvas2dCtx.prototype = {
 
     let files = null;
 
-    if (type === 'src') { 
-      this.registerImage(e);
+    switch(type) {
+      case 'src': {
+        this.registerImage(e);
+        return;
+      }
+      case 'event': {
+        files = e.target.files; 
+        break;
+      }
+      case 'file': {
+        files = e;
+        break;
+      }
+      default: {
+        return;
+      } 
+    }
+
+    if (!FileReader && !files) {
+      console.error('There was an unknown error. Check if FileReader is supported or if the correct parameter was given');
       return;
     }
 
-    if (type === 'event') { 
-      files = e.target.files; 
-    } else if(type === 'file') {
-      files = e;
-    } else { return; }
-
-    if (FileReader && files && files.length) {
-      this.imgData.iName = files[0].name;
-      this.imgData.iSize = files[0].size;
-      this.imgData.iType = files[0].type;
-
-      this.file = files[0];
-
-      let fr = new FileReader();
-      fr.onload = () => this.registerImage(fr.result);
-      fr.readAsDataURL(files[0]);
-    } else {
-      console.error('There was an unknown error. Check if FileReader is supported');
+    if (!files.length && !files[0]) {
+      console.error('There was an unknown error. Check if correct parameter was given');
+      return;
     }
+
+    if (files[0] instanceof File !== true) {
+      console.error('There is no instance of File class to read an image from.');
+      return;
+    }
+
+    this.imgData.iName = files[0].name;
+    this.imgData.iSize = files[0].size;
+    this.imgData.iType = files[0].type;
+
+    this.file = files[0];
+
+    let fr = new FileReader();
+    fr.onload = () => this.registerImage(fr.result);
+    fr.readAsDataURL(files[0]);
   },
 
   registerImage : function(src) {
@@ -1724,7 +1730,6 @@ function dpImageProcessing(callback = null) {
 }
 dpImageProcessing.prototype = {
 
-  kelvinTable : null,
   dpCtx : null,
 
   init : function (callback) { 
@@ -1736,7 +1741,6 @@ dpImageProcessing.prototype = {
   },
 
   destructor : function() {
-    this.kelvinTable = undefined;
     this.dpCtx.destructor();
     this.dpCtx = undefined;
     delete this;
@@ -2054,8 +2058,7 @@ dpImageProcessing.prototype = {
       return;
     }
 
-    if (value <= 0) { return false; }
-
+    if (value <= 0) return false;
 
     let gen = dpColor.colorTemperatureToRgb(value);
 
@@ -2187,8 +2190,8 @@ dpImageProcessing.prototype = {
       return;
     }
 
-    if (value > 100) { value = 100; }
-    if (value < -100) { value = -100; }
+    if (value > 100) value = 100;
+    if (value < -100) value = -100;
 
     value = 2.55 * value;
 
@@ -2299,7 +2302,7 @@ dpImageProcessing.prototype = {
     }
 
     let imgData = this.convolution(this.dpCtx.getImageData(), operator);
-    if ( !imgData ) return false;
+    if (!imgData) return false;
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
 
     return true;
