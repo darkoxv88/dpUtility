@@ -72,7 +72,7 @@ class dp3dEngineBase {
     try {
       canvas = document.createElement('canvas');
       canvas.innerHTML = 'This browser does not support HTML5';
-      canvas.setAttribute('dp-canvas-engine', this.index);
+      canvas.setAttribute('canvas-3d-engine', this.index);
       supported = window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
     } catch(e) {
       supported = false;
@@ -88,8 +88,6 @@ class dp3dEngineBase {
     if (!this.gl) {
       this._gl = canvas.getContext('experimental-webgl');
     }
-
-    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
 
     const vsSource = `
       attribute vec3 vertexPosition;
@@ -150,6 +148,7 @@ class dp3dEngineBase {
       },
     }
 
+    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
     this.gl.clearColor(1, 1, 1, 1);
     this.gl.clearDepth(1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -157,11 +156,15 @@ class dp3dEngineBase {
     this.gl.useProgram(this.program);
 
     let tag = document.createElement('dp-engine');
-    tag.setAttribute('dp-engine-index', this.index);
+    tag.setAttribute('engine-index', this.index);
     tag.setAttribute('style', 'display: block; width: 100%; height: 100%;');
     let style = document.createElement('style');
     style.innerHTML = `
-      [dp-canvas-engine] {
+      canvas {
+        display: inline-block;
+      }
+      
+      [canvas-3d-engine] {
         width: 100%;
         height: 100%;
       }
