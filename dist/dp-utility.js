@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.1.1
+  * @version 1.1.2
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -150,37 +150,31 @@ var dp = new function() {
     * 
     * @returns Element | HTMLCollectionOf<Element> | NodeListOf<Element>
   **/
-   this.$ = function(value, target) {
-    if (typeof value != 'string' || !value) return null;
+   this.$ = function(value, multiID, target) {
+    if (typeof value != 'string') return null;
 
     let firstChar = value[0];
 
-    let validateTarge = function(t) {
-      if (!t) return false;
-      if (t instanceof Element !== true) return false;
-      return true;
-    }(target);
-  
+    let validateTarge = target instanceof Element;
+
     if (firstChar == '<') {
       let subFirst = value.substr(1);
 
-      if (validateTarge) return target.getElementsByTagName(subFirst.substr(0, subFirst.length-1));
-      return document.getElementsByTagName(subFirst.substr(0, subFirst.length-1));
+      if (validateTarge) return target.querySelectorAll(subFirst.substr(0, subFirst.length-1));
+
+      return document.querySelectorAll(subFirst.substr(0, subFirst.length-1));
     }
 
     let query;
   
-    if (validateTarge) {
-      query = target.querySelectorAll(value);
-    }else {
-      query = document.querySelectorAll(value);
-    }
+    if (validateTarge) query = target.querySelectorAll(value);
+    else query = document.querySelectorAll(value);
 
-    if (firstChar == '#') {
-      if (query[0]) return query[0];
-    }
+    if (firstChar !== '#' || multiID) return query;
 
-    return query;
+    if (query[0]) return query[0];
+
+    return null;
   };
 
   /**
@@ -217,8 +211,12 @@ var dp = new function() {
     * Function that is called if an error happens.
   **/
   this.functionWrapper = function(func, onError) {
-    if (typeof func !== 'function') throw new TypeError('parameter "func" needs to be a function.');
-
+    if (typeof func !== 'function') {
+      console.error(new TypeError('parameter "func" needs to be a function.'));
+  
+      return function() { }
+    }
+  
     return function() {
       try {
         return func.apply(this, arguments);
@@ -232,50 +230,51 @@ var dp = new function() {
   /**
     * @name main
     * @returns {void}
-    * @function
-    * Handels the main call function
+    * @function undefined
+    * Handels the main call function and the window.onload event
   **/
-  this.main = function(mainFunc) {
+  this.main = function(mainFunc, onloadFunc, onerrorFunc) {
     try {
-      if (typeof mainFunc == 'function') mainFunc();
-    } catch(err) {
-      console.error(err);
-    } finally {
-      return 0;
+      if (typeof mainFunc === 'function') mainFunc();
+    } catch (e) {
+      if (typeof onerror === 'function') onerrorFunc(e);
     }
-  }
-
-  /**
-    * @name onload
-    * @returns {void}
-    * @function
-    * This function is called as the window.onload event
-  **/
-  this.onLoad = function(loadFunc) {
-    if (typeof loadFunc != 'function') return null;
-
+  
+    if (typeof onloadFunc !== 'function') return;
+  
+    var init = function() {
+      try {
+        onloadFunc.apply(this, arguments);
+      } catch (e) {
+        if (typeof onerrorFunc === 'function') return onerrorFunc(e);
+      }
+    }
+  
     if (window.addEventListener) {
-      window.addEventListener("load", loadFunc, false);
-      return null;
+      window.addEventListener("load", init, false);
+      return;
     }
-
+  
     if (window.attachEvent) {
-      window.attachEvent('onload', loadFunc);
-      return null;
+      window.attachEvent('onload', init);
+      return;
     }
-
+  
     if (typeof window.onload == 'function') {
       var currentWindowOnLoad = window.onload;
-
+  
       var newWindowOnLoad = function(evt) {
         currentWindowOnLoad(evt);
-        loadFunc(evt);
+        init(evt);
       };
-
+  
       window.onload = newWindowOnLoad;
-    } else { 
-      window.onload = loadFunc;
+      return;
     }
+  
+    window.onload = init;
+  
+    return;
   }
 
   /**
@@ -2421,6 +2420,107 @@ dpImageProcessing.prototype = {
 
     return imgData;
   },
+
+}
+
+
+
+// *********************** 
+// Math ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// *********************** 
+
+
+
+/**
+  * @name dpWebglUtility
+	* @class
+  * 
+  * 
+**/
+var dpWebglUtility = new function() {
+
+  this.VerifyWebgl = function() {
+    try {
+      let canvas = document.createElement('canvas');
+      canvas.innerHTML = 'This browser does not support HTML5';
+      let supported = window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+      return supported;
+    } catch(e) {
+      console.error("WebGL is not supported!");
+      return false;
+    }
+  }
+
+  this.createContext = function() {
+    if (this.VerifyWebgl() == false) return;
+
+    let canvas = document.createElement('canvas');
+    canvas.innerHTML = 'This browser does not support HTML5';
+
+    let gl = canvas.getContext('webgl');
+
+    if (!gl) gl = canvas.getContext('experimental-webgl');
+
+    if (!gl) throw new Error('There was an unknown error.');
+
+    return {
+      canvas: canvas,
+      gl: gl,
+    }
+  }
+
+  this.compileShader = function(gl, shaderSource, shaderType) {
+    var shader = gl.createShader(shaderType);
+
+    gl.shaderSource(shader, shaderSource);
+    gl.compileShader(shader);
+
+    if (!(gl.getShaderParameter(shader, gl.COMPILE_STATUS))) {
+      gl.deleteShader(shader);
+
+      throw 'Could not compile shader: ' + gl.getShaderInfoLog(shader);
+    }
+
+    return shader;
+  }
+
+  this.compileShaderFromScript = function(gl, scriptId, shaderType) {
+    var shaderScript = document.getElementById(scriptId);
+
+    if (!shaderScript) throw('Error: unknown script element: ' + scriptId);
+   
+    var shaderSource = shaderScript.text;
+   
+    if (typeof(shaderType) == 'string') return compileShader(gl, shaderSource, shaderType);
+
+    switch(shaderScript.type) {
+      case 'x-shader/x-vertex': {
+        shaderType = gl.VERTEX_SHADER;
+        break;
+      }
+      case 'x-shader/x-fragment': {
+        shaderType = gl.FRAGMENT_SHADER;
+        break;
+      }
+    }
+
+    if (!shaderType) throw('Error: shader type not set');
+   
+    return this.compileShader(gl, shaderSource, shaderType);
+  };
+
+  this.createProgram = function(gl, vertexShader, fragmentShader) {
+    var program = gl.createProgram();
+
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+   
+    gl.linkProgram(program);
+
+    if (!(gl.getProgramParameter(program, gl.LINK_STATUS))) throw ('Program failed to link: ' + gl.getProgramInfoLog (program));
+   
+    return program;
+  };
 
 }
 

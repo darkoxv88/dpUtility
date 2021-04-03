@@ -69,13 +69,20 @@ var index = {
   },
 };
 
-dp.main(function() {
+dp.main(
+  function main() {
 
-});
+  },
 
-dp.onLoad(function() {
-  dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event) });
-  index.init();
-  //let a = new Engine(1);
-  //a.destructor();
-});
+  function onload(event) {
+    dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event) });
+    index.init();
+    let a = new Engine(1);
+    //a.destructor();
+  },
+
+  function onerror(error) {
+    console.error(error);
+  }
+);
+
