@@ -75,7 +75,7 @@ dp.main(
   },
 
   function onload(event) {
-    dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event) });
+    dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event.target.files[0], 'file') });
     index.init();
     let a = new Engine(1);
     //a.destructor();

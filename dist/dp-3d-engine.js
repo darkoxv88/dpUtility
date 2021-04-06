@@ -213,6 +213,9 @@ class dp3dEngine extends dp3dEngineBase {
       this.gl.canvas.width = this.gl.canvas.clientWidth;
       this.gl.canvas.height = this.gl.canvas.clientHeight;
       this.gl.viewport(0, 0, this.gl.canvas.clientWidth, this.gl.canvas.clientHeight);
+      this.gl.clearColor(1, 1, 1, 1);
+      this.gl.clearDepth(1.0);
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
     });
 
