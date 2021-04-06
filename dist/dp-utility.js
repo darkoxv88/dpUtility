@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.1.2
+  * @version 1.1.3
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -100,11 +100,9 @@ if (!dpConst.supportsES6 || !dpConst.supportsES7) throw new Error('Insufficient 
   * @function deserialize
   * @function $
   * @function each
+  * @function functionWrapper
   * @function main
-  * @function onLoad
   * @function registerStyle
-  * @function byte
-  * @function rgba
   * @function maxCap
   * @function minCap
   * @function degToRad
@@ -333,48 +331,6 @@ var dp = new function() {
   }
 
   /**
-    * @name byte
-    * @function
-    * Takes a number value and tranforms it into type of intiger that ranges from 0 to 255 ( 0 <= x <= 255 ).
-    * @param {number} val
-  **/
-  this.byte = function(val) { 
-    try {
-      val = parseInt(val);
-
-      if (val > 255) { return 255; }
-      if (val < 0) { return 0; }
-
-      return val;
-    } catch(error) {
-      console.error(error);
-      return 0;
-    }
-  }
-
-  /**
-    * @name rgba
-    * @function
-    * Formats the given numbers into a object with r,g,b,a keys each representing a byte value corresponding to color chanel.
-    * @param {number} r
-    * represents RED chanel
-    * @param {number} g
-    * represents GREEN chanel
-    * @param {number} b
-    * represents BLUE chanel
-    * @param {number} a
-    * represents ALFA chanel
-  **/
-  this.rgba = function(r, g, b, a = 255) {
-    return {
-      r : this.byte(r),
-      g : this.byte(g),
-      b : this.byte(b),
-      a : this.byte(a)
-    }
-  }
-
-  /**
     * @name maxCap
     * @returns {number}
     * @function
@@ -431,6 +387,71 @@ var dp = new function() {
   this.events = null;
   this.frame = null;
 
+}
+
+
+
+/**
+  * @name dpFileHandlers
+	* @class
+  * 
+  * 
+**/
+var dpFileHandlers = new function() {
+
+  this.loadFile = function(file, type) {
+    return new Promise((resolve, reject) => {
+      if (!FileReader) {
+        console.error('There was an unknown error. Check if FileReader is supported or if the correct parameter was given');
+        return;
+      }
+  
+      if (file instanceof File !== true) {
+        console.error('There is no instance of File class to read an image from.');
+        return;
+      }
+
+      var reader = new FileReader();
+
+      reader.onload = function() {
+        if (typeof result == 'string') resolve(reader.result);
+        else reject();
+      };
+
+      switch(type) {
+        case 'text': {
+          reader.readAsText(file);
+          break;
+        }
+        default: {
+          reader.readAsDataURL(file);
+          break;
+        }
+      }
+    });
+  }
+
+  this.loadImage = function(source) {
+    return new Promise((resolve, reject) => {
+      var image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = source;
+    });
+  }
+
+  this.loadImageFromObject = function(source) {
+    return new Promise((resolve, reject) => {
+      var reader = new FileReader();
+      reader.onload = (ev) => {
+        if (typeof reader.result == 'string') resolve(this.loadImage(reader.result));
+        else reject(ev);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(source);
+    });
+  }
+  
 }
 
 
@@ -595,7 +616,7 @@ dpSubject.prototype = {
     this._onComplete = undefined;
 
     for (let i = 0; i < this._observers.length; i++) {
-      if (this._observers[i] instanceof dpObserver == true) this._observers[i].destructor();
+      if (this._observers[i] instanceof dpObserver === true) this._observers[i].destructor();
       this._observers[i] = undefined;
     }
 
@@ -1443,11 +1464,53 @@ var dpColor = new function()  {
     17500: [173, 200, 255],
   }
 
+  /**
+    * @name byte
+    * @function
+    * Takes a number value and tranforms it into type of intiger that ranges from 0 to 255 ( 0 <= x <= 255 ).
+    * @param {number} val
+  **/
+  this.byte = function(val) { 
+    try {
+      val = parseInt(val);
+  
+      if (val > 255) { return 255; }
+      if (val < 0) { return 0; }
+  
+      return val;
+    } catch(error) {
+      console.error(error);
+      return 0;
+    }
+  }
+
+  /**
+    * @name rgba
+    * @function
+    * Formats the given numbers into a object with r,g,b,a keys each representing a byte value corresponding to color chanel.
+    * @param {number} r
+    * represents RED chanel
+    * @param {number} g
+    * represents GREEN chanel
+    * @param {number} b
+    * represents BLUE chanel
+    * @param {number} a
+    * represents ALFA chanel
+  **/
+  this.rgba = function(r, g, b, a = 255) {
+    return {
+      r : this.byte(r),
+      g : this.byte(g),
+      b : this.byte(b),
+      a : this.byte(a)
+    }
+  }
+
   this.rgbToHSL = function(cR, cG, cB) {
 
-    let r = dp.byte(cR) / 255;
-    let g = dp.byte(cG) / 255;
-    let b = dp.byte(cB) / 255;
+    let r = this.byte(cR) / 255;
+    let g = this.byte(cG) / 255;
+    let b = this.byte(cB) / 255;
 
     let max = Math.max(r, g, b); 
     let min = Math.min(r, g, b);
@@ -1486,7 +1549,7 @@ var dpColor = new function()  {
       g = l * 255;
       b = l * 255;
 
-      return dp.rgba(r, g, b);
+      return this.rgba(r, g, b);
     }
 
     if (l < 0.5)  val2 = l * ( 1 + s );
@@ -1509,7 +1572,7 @@ var dpColor = new function()  {
     g = 255 * Hue_2_RGB(val1, val2, h);
     b = 255 * Hue_2_RGB(val1, val2, h - (1 / 3));
 
-    return dp.rgba(r, g, b);
+    return this.rgba(r, g, b);
   }
 
   this.colorTemperatureToRgb = function(value) {
@@ -1543,7 +1606,7 @@ var dpColor = new function()  {
       b = (138.5177312231 * Math.log(value - 10) - 305.0447927307).toFixed(0);
     }
 
-    return dp.rgba(r, g, b);
+    return this.rgba(r, g, b);
   }
 
 }
@@ -1593,19 +1656,30 @@ dpCanvas2dCtx.prototype = {
   loadImage : function(e, type='event') {
     if (!e) { return; }
 
-    let files = null;
-
     switch(type) {
       case 'src': {
-        this.registerImage(e);
+        if (typeof(e) == 'string') this.registerImage(e);
         return;
       }
       case 'event': {
-        files = e.target.files; 
+        let files = e.target.files; 
+
+        if (!files) {
+          console.error('There was an unknown error. Check if correct parameter was given');
+          return;
+        }
+
+        if (!files.length && !files[0]) {
+          console.error('There was an unknown error. Check if correct parameter was given');
+          return;
+        }
+
+        this.file = files[0];
+
         break;
       }
       case 'file': {
-        files = e;
+        this.file = e;
         break;
       }
       default: {
@@ -1613,30 +1687,23 @@ dpCanvas2dCtx.prototype = {
       } 
     }
 
-    if (!FileReader && !files) {
-      console.error('There was an unknown error. Check if FileReader is supported or if the correct parameter was given');
-      return;
-    }
-
-    if (!files.length && !files[0]) {
-      console.error('There was an unknown error. Check if correct parameter was given');
-      return;
-    }
-
-    if (files[0] instanceof File !== true) {
+    if (this.file instanceof File !== true) {
       console.error('There is no instance of File class to read an image from.');
       return;
     }
 
-    this.imgData.iName = files[0].name;
-    this.imgData.iSize = files[0].size;
-    this.imgData.iType = files[0].type;
+    if (!FileReader) {
+      console.error('There was an unknown error. Check if FileReader is supported or if the correct parameter was given');
+      return;
+    }
 
-    this.file = files[0];
+    this.imgData.iName = this.file.name;
+    this.imgData.iSize = this.file.size;
+    this.imgData.iType = this.file.type;
 
     let fr = new FileReader();
     fr.onload = () => this.registerImage(fr.result);
-    fr.readAsDataURL(files[0]);
+    fr.readAsDataURL(this.file);
   },
 
   registerImage : function(src) {
@@ -1816,9 +1883,9 @@ dpImageProcessing.prototype = {
           }
         }
 
-        outputData.data[position] = dp.byte(sumR);
-        outputData.data[position + 1] = dp.byte(sumG);
-        outputData.data[position + 2] = dp.byte(sumB);
+        outputData.data[position] = dpColor.byte(sumR);
+        outputData.data[position + 1] = dpColor.byte(sumG);
+        outputData.data[position + 2] = dpColor.byte(sumB);
         outputData.data[position + 3] = imgData.data[position + 3];
       }
     }
@@ -1987,9 +2054,9 @@ dpImageProcessing.prototype = {
     for (var i = 0; i < data.length; i += 4) {
       let red = data[i], green = data[i + 1], blue = data[i + 2];
   
-      data[i] = dp.byte(0.393 * red + 0.769 * green + 0.189 * blue);
-      data[i + 1] = dp.byte(0.349 * red + 0.686 * green + 0.168 * blue);
-      data[i + 2] = dp.byte(0.272 * red + 0.534 * green + 0.131 * blue);
+      data[i] = dpColor.byte(0.393 * red + 0.769 * green + 0.189 * blue);
+      data[i + 1] = dpColor.byte(0.349 * red + 0.686 * green + 0.168 * blue);
+      data[i + 2] = dpColor.byte(0.272 * red + 0.534 * green + 0.131 * blue);
     }
 
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
@@ -2014,9 +2081,9 @@ dpImageProcessing.prototype = {
     let data = imgData.data;
 
     for (var i = 0; i < data.length; i += 4) {
-      data[i] = dp.byte(255 * Math.pow((data[i] / 255), gammaCorrection));
-      data[i+1] = dp.byte(255 * Math.pow((data[i+1] / 255), gammaCorrection));
-      data[i+2] = dp.byte(255 * Math.pow((data[i+2] / 255), gammaCorrection));
+      data[i] = dpColor.byte(255 * Math.pow((data[i] / 255), gammaCorrection));
+      data[i+1] = dpColor.byte(255 * Math.pow((data[i+1] / 255), gammaCorrection));
+      data[i+2] = dpColor.byte(255 * Math.pow((data[i+2] / 255), gammaCorrection));
     }
 
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
@@ -2041,7 +2108,7 @@ dpImageProcessing.prototype = {
     let data = imgData.data;
 
     for (var i = 0; i < data.length; i += 4) {
-      data[i+3] = dp.byte(data[i+3] * value);
+      data[i+3] = dpColor.byte(data[i+3] * value);
     }
 
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
@@ -2069,9 +2136,9 @@ dpImageProcessing.prototype = {
     let data = imgData.data;
 
     for (var i = 0; i < data.length; i += 4) {
-      data[i] = dp.byte(data[i] * r);
-      data[i+1] = dp.byte(data[i+1] * g);
-      data[i+2] = dp.byte(data[i+2] * b);
+      data[i] = dpColor.byte(data[i] * r);
+      data[i+1] = dpColor.byte(data[i+1] * g);
+      data[i+2] = dpColor.byte(data[i+2] * b);
     }
 
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
@@ -2098,9 +2165,9 @@ dpImageProcessing.prototype = {
     for (var i = 0; i < data.length; i += 4) {
       let random = (0.5 - Math.random()) * level;
 
-      data[i] += dp.byte(random);
-      data[i+1] += dp.byte(random);
-      data[i+2] += dp.byte(random);
+      data[i] += dpColor.byte(random);
+      data[i+1] += dpColor.byte(random);
+      data[i+2] += dpColor.byte(random);
     }
 
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
@@ -2163,15 +2230,15 @@ dpImageProcessing.prototype = {
     for (var i = 0; i < data.length; i += 4) {
       let red = data[i], green = data[i + 1], blue = data[i + 2];
 
-      data[i] = dp.byte(
+      data[i] = dpColor.byte(
         ( ((1 - value)*luR + value)*red + ((1 - value)*luG)*green + ((1 - value)*luB)*blue )
       );
       
-      data[i+1] = dp.byte(
+      data[i+1] = dpColor.byte(
         ( ((1 - value)*luR)*red + ((1 - value)*luG + value)*green + ((1 - value)*luB)*blue )
       );
 
-      data[i+2] = dp.byte(
+      data[i+2] = dpColor.byte(
         ( ((1 - value)*luR)*red + ((1 - value)*luG)*green + ((1 - value)*luB + value)*blue )
       );
     }
@@ -2198,9 +2265,9 @@ dpImageProcessing.prototype = {
     let data = imgData.data;
 
     for (var i = 0; i < data.length; i += 4) {
-      data[i] = dp.byte(data[i] + value);
-      data[i+1] = dp.byte(data[i+1] + value);
-      data[i+2] = dp.byte(data[i+2] + value);
+      data[i] = dpColor.byte(data[i] + value);
+      data[i+1] = dpColor.byte(data[i+1] + value);
+      data[i+2] = dpColor.byte(data[i+2] + value);
     }
 
     this.dpCtx.ctxActive.putImageData(imgData, 0, 0);
@@ -2439,10 +2506,9 @@ dpImageProcessing.prototype = {
 **/
 var dpWebglUtility = new function() {
 
-  this.VerifyWebgl = function() {
+  this.verifyWebgl = function() {
     try {
       let canvas = document.createElement('canvas');
-      canvas.innerHTML = 'This browser does not support HTML5';
       let supported = window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
       return supported;
     } catch(e) {
@@ -2452,21 +2518,23 @@ var dpWebglUtility = new function() {
   }
 
   this.createContext = function() {
-    if (this.VerifyWebgl() == false) return;
+    if (this.verifyWebgl() == false) return;
 
     let canvas = document.createElement('canvas');
     canvas.innerHTML = 'This browser does not support HTML5';
 
-    let gl = canvas.getContext('webgl');
+    let gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
 
     if (!gl) gl = canvas.getContext('experimental-webgl');
 
     if (!gl) throw new Error('There was an unknown error.');
 
-    return {
-      canvas: canvas,
-      gl: gl,
-    }
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.clearColor(1, 1, 1, 1);
+    gl.clearDepth(1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    return gl;
   }
 
   this.compileShader = function(gl, shaderSource, shaderType) {
@@ -2491,7 +2559,7 @@ var dpWebglUtility = new function() {
    
     var shaderSource = shaderScript.text;
    
-    if (typeof(shaderType) == 'string') return compileShader(gl, shaderSource, shaderType);
+    if (typeof(shaderType) == 'string') return this.compileShader(gl, shaderSource, shaderType);
 
     switch(shaderScript.type) {
       case 'x-shader/x-vertex': {
@@ -2504,7 +2572,7 @@ var dpWebglUtility = new function() {
       }
     }
 
-    if (!shaderType) throw('Error: shader type not set');
+    if (!shaderType) throw('Error: failed to set shader');
    
     return this.compileShader(gl, shaderSource, shaderType);
   };
@@ -2514,13 +2582,23 @@ var dpWebglUtility = new function() {
 
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
-   
+
     gl.linkProgram(program);
 
     if (!(gl.getProgramParameter(program, gl.LINK_STATUS))) throw ('Program failed to link: ' + gl.getProgramInfoLog (program));
-   
+
     return program;
   };
+
+  this.resizeCanvas = function(gl, width, height) {
+    gl.canvas.width = width;
+    gl.canvas.height = height;
+
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.clearColor(1, 1, 1, 1);
+    gl.clearDepth(1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  }
 
 }
 
