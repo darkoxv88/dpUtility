@@ -34,14 +34,6 @@
 
 "use strict";
 
-class Engine extends dp3dEngine {
-  loadView(ele) {
-    let view = dp.$('<app-display>')[0];
-    view.innerHTML = '';
-    view.append(ele);
-  }
-}
-
 var index = {
   test : null,
 
@@ -77,8 +69,6 @@ dp.main(
   function onload(event) {
     dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event.target.files[0], 'file') });
     index.init();
-    let a = new Engine(1);
-    //a.destructor();
   },
 
   function onerror(error) {
