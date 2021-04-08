@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.1.3
+  * @version 1.1.4
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -210,7 +210,7 @@ var dp = new function() {
   **/
   this.functionWrapper = function(func, onError) {
     if (typeof func !== 'function') {
-      console.error(new TypeError('parameter "func" needs to be a function.'));
+      console.warn(new TypeError('parameter "func" needs to be a function.'));
   
       return function() { }
     }
@@ -754,6 +754,10 @@ var dpVec2 = new function() {
     return this.create(v1[0]/v2[0], v1[1]/v2[1]);
   }
 
+  this.min = function(v1, v2) {
+    return this.create(Math.min(v1[0], v2[0]), Math.min(v1[1], v2[1]));
+  }
+
   this.max = function(v1, v2) {
     return this.create(Math.max(v1[0], v2[0]), Math.max(v1[1], v2[1]));
   }
@@ -773,7 +777,7 @@ var dpVec2 = new function() {
   }
 
   this.negate = function(v1) {
-    return this.create(0 - v1[0], 0 - v1[1]);;
+    return this.create(0 - v1[0], 0 - v1[1]);
   }
 }
 
@@ -829,16 +833,39 @@ var dpVec3 = new function() {
     return this.create(v1[0]/v2[0], v1[1]/v2[1], v1[2]/v2[2]);
   }
 
+  this.min = function(v1, v2) {
+    return this.create(Math.min(v1[0], v2[0]), Math.min(v1[1], v2[1]), Math.min(v1[2], v2[2]));
+  }
+
+  this.max = function(v1, v2) {
+    return this.create(Math.max(v1[0], v2[0]), Math.max(v1[1], v2[1]), Math.max(v1[2], v2[2]));
+  }
+
   this.scale = function(v1, scale) {
     return this.create(v1[0] * scale, v1[1] * scale, v1[2] * scale); 
   }
 
-  this.dotProduct = function(v1, v2) {
-    return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+  this.distance = function(v1, v2) {
+    let x = v2[0] - v1[0];
+    let y = v2[1] - v1[1];
+    let z = v2[2] - v1[2];
+    return x*x + y*y + z*z;
+  }
+
+  this.distanceSqrt = function(v1, v2) {
+    return Math.sqrt(this.distance(v1, v2));
+  }
+
+  this.negate = function(v1) {
+    return this.create(0 - v1[0], 0 - v1[1], 0 - v1[2]);
   }
 
   this.lenght = function(v) {
     return Math.sqrt(this.dotProduct(v, v));
+  }
+
+  this.dotProduct = function(v1, v2) {
+    return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
   }
 
   this.normalise = function(v) {
@@ -911,8 +938,28 @@ var dpVec4 = new function() {
     return this.create(v1[0]/v2[0], v1[1]/v2[1], v1[2]/v2[2], v1[3]/v2[3]);
   }
 
+  this.min = function(v1, v2) {
+    return this.create(Math.min(v1[0], v2[0]), Math.min(v1[1], v2[1]), Math.min(v1[2], v2[2]), Math.min(v1[3], v2[3]));
+  }
+
+  this.max = function(v1, v2) {
+    return this.create(Math.max(v1[0], v2[0]), Math.max(v1[1], v2[1]), Math.max(v1[2], v2[2]), Math.max(v1[3], v2[3]));
+  }
+
   this.scale = function(v1, scale) {
     return this.create(v1[0] * scale, v1[1] * scale, v1[2] * scale, v1[3] * scale); 
+  }
+
+  this.distance = function(a, b) {
+    let x = b[0] - a[0];
+    let y = b[1] - a[1];
+    let z = b[2] - a[2];
+    let w = b[3] - a[3];
+    return x*x + y*y + z*z + w*w;
+  }
+
+  this.distanceSqrt = function(v1, v2) {
+    return Math.sqrt(this.distance(v1, v2));
   }
 
 }
@@ -931,6 +978,73 @@ var dpMat2 = new function() {
 
   this.empty = function() {
     return new this._array(4);
+  }
+
+  this.transpose = function(a) {
+    let out = this.empty();
+
+    out[0] = a[0];
+    out[1] = a[2];
+    out[2] = a[1];
+    out[3] = a[3];
+    
+    return out;
+  }
+
+  this.determinant = function (a) {
+    return a[0] * a[3] - a[2] * a[1];
+  };
+
+  this.invert = function(a) {
+    let out = this.empty();
+    let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3],
+
+    det = this.determinant(a);
+
+    if (!det) return null;
+
+    det = 1.0 / det;
+
+    out[0] =  a3 * det;
+    out[1] = -a1 * det;
+    out[2] = -a2 * det;
+    out[3] =  a0 * det;
+
+    return out;
+  }
+
+  this.multiply = function (a, b) {
+    let out = this.empty();
+    var a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3];
+    var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
+
+    out[0] = a0 * b0 + a2 * b1;
+    out[1] = a1 * b0 + a3 * b1;
+    out[2] = a0 * b2 + a2 * b3;
+    out[3] = a1 * b2 + a3 * b3;
+
+    return out;
+  };
+
+  /**
+   * @name scale
+   * @function
+	 * Scales the mat2 by the dimensions in the given vec2
+	 * @param {mat2} a the mat2x2 to scale
+	 * @param {vec2} v the vec2 to scale the matrix by
+	 * @returns {mat2} mat2x2
+	**/
+  this.scale = function(a, v) {
+    let out = this.empty();
+    let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3];
+    let v0 = v[0], v1 = v[1];
+
+    out[0] = a0 * v0;
+    out[1] = a1 * v0;
+    out[2] = a2 * v1;
+    out[3] = a3 * v1;
+
+    return out;
   }
 
 }
@@ -1300,15 +1414,24 @@ dpFrame.prototype = {
   onStart : function(onCall, onError) {
     if (typeof onCall == 'function') { this._onStart.subscribe(onCall, onError); }
   },
+  onStartComplete : function(onCall, onError) {
+    if (typeof onCall == 'function') { this._onStart.onComplete(onCall, onError) }
+  },
 
   _onUpdate : null,
   onUpdate : function(onCall, onError) {
     if (typeof onCall == 'function') { this._onUpdate.subscribe(onCall, onError); }
   },
+  oUpdateComplete : function(onCall, onError) {
+    if (typeof onCall == 'function') { this._onUpdate.onComplete(onCall, onError) }
+  },
 
   _onLateUpdate : null,
   onLateUpdate : function(onCall, onError) {
     if (typeof onCall == 'function') { this._onLateUpdate.subscribe(onCall, onError); }
+  },
+  onLateUpdateComplete : function(onCall, onError) {
+    if (typeof onCall == 'function') { this._onLateUpdate.onComplete(onCall, onError) }
   },
 
   init : function() {
@@ -1341,7 +1464,7 @@ dpFrame.prototype = {
       this._totalElapsedTime = 0;
       this._elapsedSinceLastLoop = 0;
 
-      if (this._onStart instanceof dpSubject) this._onStart.next(0);
+      this._onStart.next(0);
 
       requestAnimationFrame((t) => this.frame(t));
     });
@@ -2507,14 +2630,9 @@ dpImageProcessing.prototype = {
 var dpWebglUtility = new function() {
 
   this.verifyWebgl = function() {
-    try {
-      let canvas = document.createElement('canvas');
-      let supported = window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
-      return supported;
-    } catch(e) {
-      console.error("WebGL is not supported!");
-      return false;
-    }
+    if (window.WebGLRenderingContext) return true;
+
+    return false;
   }
 
   this.createContext = function() {
@@ -2525,14 +2643,9 @@ var dpWebglUtility = new function() {
 
     let gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
 
-    if (!gl) gl = canvas.getContext('experimental-webgl');
+    if (!gl) gl = canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
 
     if (!gl) throw new Error('There was an unknown error.');
-
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    gl.clearColor(1, 1, 1, 1);
-    gl.clearDepth(1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     return gl;
   }
