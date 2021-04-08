@@ -63,11 +63,10 @@ var index = {
 
 dp.main(
   function main() {
-
+    dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event.target.files[0], 'file') });
   },
 
   function onload(event) {
-    dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event.target.files[0], 'file') });
     index.init();
   },
 
