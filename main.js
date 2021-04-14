@@ -34,6 +34,8 @@
 
 "use strict";
 
+var events = new dp.EventsHandler();
+
 var index = {
   test : null,
 
@@ -44,7 +46,7 @@ var index = {
       <img id="test-img" style="margin: 6px;" width="400px" height="auto"></img>
     `;
 
-    this.test = new dpImageProcessing(() => {
+    this.test = new dp.ImageProcessing(() => {
       this.test.temperature(6200);
       this.test.lightness(7);
       this.test.gamma(1.15)
@@ -63,7 +65,7 @@ var index = {
 
 dp.main(
   function main() {
-    dp.events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event.target.files[0], 'file') });
+    events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event.target.files[0], 'file') });
   },
 
   function onload(event) {
@@ -74,4 +76,3 @@ dp.main(
     console.error(error);
   }
 );
-
