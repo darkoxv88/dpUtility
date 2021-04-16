@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.1.5
+  * @version 1.1.6
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -37,7 +37,7 @@
 
   if (typeof define === 'function' && define.amd) define([], function() { return factory.call(root); });
   else root.dp = factory.call(root);
-}(window, function() {
+}(this, function() {
   'use strict';
 
   /**	
@@ -98,7 +98,7 @@
   /**
     * @name deserialize
     * @function
-    * Performs 1D deserialization of GET query
+    * Performs 1D deserialization of GET query.
     * @param {string} str
     * @returns string
   **/
@@ -117,17 +117,14 @@
   /**
     * @name $
     * @function
-    * Gets DOMelement/s
+    * Gets DOMelement/s.
     * @param {string} value
-
     * If the string starts with '#' it will search by id attribute.
     * If the string starts with '.' it will search by class attribute.
     * If the string is in HTML tag format '<>' it will search all DOM elements as that tag.
     * Everything else will use generic query selector.
-    * 
     * @param {Element} target
-    * If the target is of type Element it wil perform querySelectorAll on its chields and grandchields
-    * 
+    * If the target is of type Element it wil perform querySelectorAll on its chields and grandchields.
     * @returns Element | HTMLCollectionOf<Element> | NodeListOf<Element>
   **/
    var $ = function(value, multiID, target) {
@@ -160,7 +157,7 @@
   /**
     * @name each
     * @function
-    * Iterates through given objects elements.
+    * Iterates through given objects elemente.
     * @param {object} obj
     * Objects to iterate through.
     * @param {function} callback
@@ -185,7 +182,7 @@
     * @name functionWrapper
     * @function
     * Wrappes the given function in try-catch block.
-    * @param {object} func
+    * @param {function} func
     * Function to wrapp.
     * @param {function} onError
     * Function that is called if an error happens.
@@ -211,7 +208,7 @@
     * @name main
     * @returns {void}
     * @function
-    * Handels the main call function and the window.onload event
+    * Handels the main call function and the window.onload event.
   **/
   var main = function(mainFunc, onloadFunc, onerrorFunc) {
     try {
@@ -261,11 +258,11 @@
     * @name registerStyle
     * @returns {boolean}
     * @function
-    * Adds the given style to head
+    * Adds the given style to head.
     * @param {string} tag
-    * should be a string of a html tag, ex: div || html-tag 
+    * should be a string of a html tag, ex: div || html-tag.
     * @param {string} style
-    * Encompasses the given style param around the tag param
+    * Encompasses the given style param around the tag param.
   **/
   var registerStyle = function(tag, style) {
     let head = $('<head>')[0];
@@ -344,8 +341,8 @@
     * @name degToRad
     * @returns {number}
     * @function
-    * Converts the given degree to radian
-    * @param {number} tag
+    * Converts the given degree to radian.
+    * @param {number} val
     * Degree value to convert.
   **/
   var degToRad = function(val) {
@@ -356,8 +353,8 @@
     * @name radToDeg
     * @returns {number}
     * @function
-    * Converts the given radian to degre
-    * @param {number} tag
+    * Converts the given radian to degre.
+    * @param {number} val
     * Radian value to convert.
   **/
   var radToDeg = function(val) {
@@ -369,13 +366,18 @@
   /**
     * @name vec2
     * @class
-    * 
-    * 
+    * Handles the calculations for a 2D Vector.
   **/
   var vec2 = new function() {
 
     this._array = dpConst.floatArray;
 
+    /**
+      * @name empty
+      * @returns {vec2}
+      * @function
+      * Creates an empty vec2
+    **/
     this.empty = function() {
       let out = new this._array(2);
       out[0] = 0;
@@ -458,6 +460,10 @@
       );
 	  };
 
+    this.inverse = function(a) {
+      return this.create(1.0 / a[0], 1.0 / a[1]); 
+    };
+
   }
 
 
@@ -465,13 +471,18 @@
   /**
     * @name vec3
     * @class
-    * 
-    * 
+    * Handles the calculations for a 3D Vector.
   **/
   var vec3 = new function() {
 
     this._array = dpConst.floatArray;
 
+    /**
+      * @name empty
+      * @returns {vec3}
+      * @function
+      * Creates an empty vec3
+    **/
     this.empty = function() {
       let out = new this._array(3);
       out[0] = 0;
@@ -567,6 +578,10 @@
       );
     }
 
+    this.inverse = function(a) {
+      return this.create(1.0 / a[0], 1.0 / a[1], 1.0 / a[2]); 
+    };
+
   }
 
 
@@ -574,13 +589,18 @@
   /**
     * @name vec4
     * @class
-    * 
-    * 
+    * Handles the calculations for a 4D Vector.
   **/
   var vec4 = new function() {
 
     this._array = dpConst.floatArray;
 
+    /**
+      * @name empty
+      * @returns {vec3}
+      * @function
+      * Creates an empty vec3
+    **/
     this.empty = function() {
       let out = new this._array(3);
       out[0] = 0;
@@ -660,6 +680,10 @@
       return Math.sqrt(this.dotProduct(v, v));
     }
 
+    this.inverse = function(a) {
+      return this.create(1.0 / a[0], 1.0 / a[1], 1.0 / a[2], 1.0 / a[3]); 
+    };
+
   }
 
   /**
@@ -672,76 +696,159 @@
 
     this._array = dpConst.floatArray;
 
+    /**
+      * @name empty
+      * @function
+      * Creates an empty mat2
+      * @returns {mat2}
+    **/
     this.empty = function() {
       return new this._array(4);
     }
 
-    this.transpose = function(a) {
+    /**
+      * @name clone
+      * @function
+      * Clones the given mat2
+      * @param {mat2} m the source matrix
+      * @returns {mat2}
+    **/
+    this.clone = function(m) {
       let out = this.empty();
 
-      out[0] = a[0];
-      out[1] = a[2];
-      out[2] = a[1];
-      out[3] = a[3];
+      out[0] = m[0];
+      out[1] = m[1];
+      out[2] = m[2];
+      out[3] = m[3];
+
+      return out;
+    }
+
+    /**
+      * @name identity
+      * @function
+      * Creates an identity mat2
+      * @returns {mat2}
+    **/
+    this.identity = function() {
+      let out = this.empty();
+
+	    out[0] = 1;
+	    out[1] = 0;
+	    out[2] = 0;
+	    out[3] = 1;
+
+	    return out;
+	  };
+
+    /**
+      * @name transpose
+      * @function
+      * Transposes the given mat2
+      * @param {mat2} m the source matrix
+      * @returns {mat2}
+    **/
+    this.transpose = function(m) {
+      let out = this.empty();
+
+      out[0] = m[0];
+      out[1] = m[2];
+      out[2] = m[1];
+      out[3] = m[3];
       
       return out;
     }
 
-    this.determinant = function (a) {
-      return a[0] * a[3] - a[2] * a[1];
+    /**
+      * @name determinant
+      * @function
+      * Calculates the determinant of a mat2
+      * @param {mat2} m the source matrix
+      * @returns {Number} determinant of a
+    **/
+    this.determinant = function (m) {
+      return m[0] * m[3] - m[2] * m[1];
     };
 
-    this.invert = function(a) {
+    /**
+      * @name invert
+      * @function
+      * Inverts a mat2
+      * @param {mat2} m the source matrix
+      * @returns {mat2}
+    **/
+    this.invert = function(m) {
       let out = this.empty();
-      let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3],
 
-      det = this.determinant(a);
+      det = this.determinant(m);
 
-      if (!det) return null;
+      if (!det) return out;
 
       det = 1.0 / det;
 
-      out[0] =  a3 * det;
-      out[1] = -a1 * det;
-      out[2] = -a2 * det;
-      out[3] =  a0 * det;
+      out[0] =  m[3] * det;
+      out[1] = -(m[1]) * det;
+      out[2] = -(m[2]) * det;
+      out[3] =  m[0] * det;
 
       return out;
     }
 
+    /**
+      * @name multiply
+      * @function
+      * Performs a standard matrix multiplication between two mat2.
+      * @param {mat2} a the mat2 to multiply.
+      * @param {mat2} b the mat2 multiply by.
+      * @returns {mat2} mat2x2
+    **/
     this.multiply = function (a, b) {
       let out = this.empty();
-      var a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3];
-      var b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
 
-      out[0] = a0 * b0 + a2 * b1;
-      out[1] = a1 * b0 + a3 * b1;
-      out[2] = a0 * b2 + a2 * b3;
-      out[3] = a1 * b2 + a3 * b3;
+      out[0] = a[0] * b[0] + a[2] * b[1];
+      out[1] = a[1] * b[0] + a[3] * b[1];
+      out[2] = a[0]* b[2] + a[2] * b[3];
+      out[3] = a[1] * b[2] + a[3] * b[3];
 
       return out;
     };
 
     /**
-     * @name scale
-     * @function
-     * Scales the mat2 by the dimensions in the given vec2
-     * @param {mat2} a the mat2x2 to scale
-     * @param {vec2} v the vec2 to scale the matrix by
-     * @returns {mat2} mat2x2
+      * @name scale
+      * @function
+      * Scales the mat2 by the dimensions in the given vec2
+      * @param {mat2} a the mat2 to scale
+      * @param {vec2} v the vec2 to scale the matrix by
+      * @returns {mat2} mat2
     **/
     this.scale = function(a, v) {
       let out = this.empty();
-      let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3];
-      let v0 = v[0], v1 = v[1];
 
-      out[0] = a0 * v0;
-      out[1] = a1 * v0;
-      out[2] = a2 * v1;
-      out[3] = a3 * v1;
+      out[0] = a[0] * v[0];
+      out[1] = a[1] * v[0];
+      out[2] = a[2] * v[1];
+      out[3] = a[3] * v[1];
 
       return out;
     }
+
+    /**
+      * @name adjugate
+      * @function
+      * Adjugates the given mat2
+      * @param {mat2} m the source matrix
+      * @returns {mat2} mat2
+    **/
+    this.adjugate = function(m) {
+      let out = this.empty();
+
+	    out[0] =  a[3];
+	    out[1] = -a[1];
+	    out[2] = -a[2];
+	    out[3] =  a[0];
+
+	    return out;
+	  };
 
   }
 
@@ -757,8 +864,169 @@
 
     this._array = dpConst.floatArray;
 
+    /**
+      * @name empty
+      * @returns {mat3}
+      * @function
+      * Creates an empty mat3
+    **/
     this.empty = function() {
       return new this._array(9);
+    }
+
+    /**
+      * @name clone
+      * @function
+      * Clones the given mat3
+      * @param {mat3} m the source matrix
+      * @returns {mat3}
+    **/
+    this.clone = function(m) {
+      let out = this.empty();
+
+      out[0] = m[0];
+      out[1] = m[1];
+      out[2] = m[2];
+      out[3] = m[3];
+      out[4] = m[4];
+      out[5] = m[5];
+      out[6] = m[6];
+      out[7] = m[7];
+      out[8] = m[8];
+
+      return out;
+    }
+
+    /**
+      * @name identity
+      * @function
+      * Creates an identity mat3
+      * @returns {mat3}
+    **/
+    this.identity = function() {
+      let out = this.empty();
+
+      out[0] = 1;
+      out[1] = 0;
+      out[2] = 0;
+      out[3] = 0;
+      out[4] = 1;
+      out[5] = 0;
+      out[6] = 0;
+      out[7] = 0;
+      out[8] = 1;
+
+	    return out;
+	  };
+
+    /**
+      * @name transpose
+      * @function
+      * Transposes the given mat3
+      * @param {mat3} m the source matrix
+      * @returns {mat3}
+    **/
+    this.transpose = function(m) {
+      let out = this.empty();
+
+      out[0] = m[0];
+	    out[1] = m[3];
+	    out[2] = m[6];
+	    out[3] = m[1];
+	    out[4] = m[4];
+	    out[5] = m[7];
+	    out[6] = m[2];
+	    out[7] = m[5];
+	    out[8] = m[8];
+      
+      return out;
+    }
+
+    /**
+      * @name determinant
+      * @function
+      * Calculates the determinant of a mat3
+      * @param {mat3} m the source matrix
+      * @returns {Number} determinant of a
+    **/
+    this.determinant = function (m) {
+	    return m[0] * (m[8] * m[4] - m[5] * m[7]) + m[1] * (m[5] * m[6] - m[8] * m[3]) + m[2] * (m[7] * m[3] - m[4] * m[6]);
+	  };
+
+    /**
+      * @name invert
+      * @function
+      * Inverts a mat3
+      * @param {mat3} m the source matrix
+      * @returns {mat3}
+    **/
+    this.invert = function(m) {
+      let out = this.empty();
+	    let det = this.determinant(m);
+
+	    if (!det) return out;
+
+	    det = 1.0 / det;
+
+	    out[0] = (m[8] * m[4] - m[5] * m[7]) * det;
+	    out[1] = (-(m[8]) * m[1] + m[2] * m[7]) * det;
+	    out[2] = (m[5] * m[1] - m[2] * m[4]) * det;
+	    out[3] = (-(m[8]) * m[3] + m[5] * m[6]) * det;
+	    out[4] = (m[8] * m[0] - m[2] * m[6]) * det;
+	    out[5] = (-(m[5]) * m[0] + m[2] * m[3]) * det;
+	    out[6] = (m[7] * m[3] - m[4] * m[6]) * det;
+	    out[7] = (-(m[7]) * m[0] + m[1] * m[6]) * det;
+	    out[8] = (m[4] * m[0] - m[1] * m[3]) * det;
+
+	    return out;
+	  };
+
+    /**
+      * @name multiply
+      * @function
+      * Performs a standard matrix multiplication between two mat3.
+      * @param {mat3} a the mat3 to multiply.
+      * @param {mat3} v the mat3 multiply by.
+      * @returns {mat3}
+    **/
+    this.multiply = function (a, b) {
+      let out = this.empty();
+
+	    out[0] = b[0] * a[0] + b[1] * a[3] + b[2] * a[6];
+	    out[1] = b[0] * a[1] + b[1] * a[4] + b[2] * a[7];
+	    out[2] = b[0] * a[2] + b[1] * a[5] + b[2] * a[8];
+	    out[3] = b[3] * a[0] + b[4] * a[3] + b[5] * a[6];
+	    out[4] = b[3] * a[1] + b[4] * a[4] + b[5] * a[7];
+	    out[5] = b[3] * a[2] + b[4] * a[5] + b[5] * a[8];
+	    out[6] = b[6] * a[0] + b[7] * a[3] + b[8] * a[6];
+	    out[7] = b[6] * a[1] + b[7] * a[4] + b[8] * a[7];
+	    out[8] = b[6] * a[2] + b[7] * a[5] + b[8] * a[8];
+    
+      return out;
+    };
+
+    /**
+      * @name scale
+      * @function
+      * Scales the mat3 by the dimensions in the given vec3
+      * @param {mat3} a the mat3 to scale
+      * @param {vec3} v the vec3 to scale the matrix by
+      * @returns {mat2} mat3
+    **/
+     this.scale = function(a, v) {
+      let out = this.empty();
+
+      out[0] = a[0] * v[0];
+      out[1] = a[1] * v[0];
+      out[2] = a[2] * v[0];
+      out[3] = a[3] * v[1];
+      out[4] = a[4] * v[1];
+      out[5] = a[5] * v[1];
+      out[6] = a[6] * v[2];
+      out[7] = a[7] * v[2];
+      out[8] = a[8] * v[2];
+
+      return out;
     }
 
   }
@@ -775,11 +1043,35 @@
 
     this._array = dpConst.floatArray;
 
+    /**
+      * @name empty
+      * @returns {mat4}
+      * @function
+      * Creates an empty mat4
+    **/
     this.empty = function() {
       return new this._array(16);
     }
 
-  }    
+  }
+
+
+
+  /**
+    * @name quat
+    * @class
+    * 
+    * 
+  **/
+  var quat = new function() {
+
+    this._array = dpConst.floatArray;
+
+    this.empty = function() {
+      return new this._array(4);
+    }
+
+  }
 
 
 
