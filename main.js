@@ -67,7 +67,6 @@ var index = {
 dp.main(
   function main() {
     events.add('change', 'input[load-img]', (event) => { index.test.loadImage(event.target.files[0], 'file') });
-    ajax.get('./index.html', null, function(data){ console.log(data); })
   },
 
   function onload(event) {
