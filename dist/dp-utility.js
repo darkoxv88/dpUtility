@@ -10,7 +10,7 @@
 
 	* @fileoverview dp-utility.js provides some useful functionalities
   * @source https://github.com/darkoxv88/dpUtility
-  * @version 1.1.6
+  * @version 1.1.7
 
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -364,6 +364,39 @@
   
 
   /**
+    * @name safeUriHandler
+    * @class
+    * Safely handles URI encode and decode.
+  **/
+  var safeUriHandler = new function() {
+
+    this.encode = function(str) {
+      try {
+        return encodeURIComponent(str);
+      }
+      catch (e) {
+        console.warn('Could not encode the given string: ' + str, e);
+  
+        return str;
+      }
+    }
+
+    this.decode = function(str) {
+      try {
+        return encodeURIComponent(str);
+      }
+      catch (e) {
+        console.warn('Could not decode the given string: ' + str, e);
+  
+        return str;
+      }
+    }
+
+  }
+
+
+
+  /**
     * @name vec2
     * @class
     * Handles the calculations for a 2D Vector.
@@ -458,11 +491,11 @@
         out[0] = a[0] / len,
         out[1] = a[1] / len
       );
-	  };
+	  }
 
     this.inverse = function(a) {
       return this.create(1.0 / a[0], 1.0 / a[1]); 
-    };
+    }
 
   }
 
@@ -580,7 +613,7 @@
 
     this.inverse = function(a) {
       return this.create(1.0 / a[0], 1.0 / a[1], 1.0 / a[2]); 
-    };
+    }
 
   }
 
@@ -682,7 +715,7 @@
 
     this.inverse = function(a) {
       return this.create(1.0 / a[0], 1.0 / a[1], 1.0 / a[2], 1.0 / a[3]); 
-    };
+    }
 
   }
 
@@ -699,7 +732,7 @@
     /**
       * @name empty
       * @function
-      * Creates an empty mat2
+      * Creates an empty mat2 (2x2)
       * @returns {mat2}
     **/
     this.empty = function() {
@@ -739,7 +772,7 @@
 	    out[3] = 1;
 
 	    return out;
-	  };
+	  }
 
     /**
       * @name transpose
@@ -768,7 +801,7 @@
     **/
     this.determinant = function (m) {
       return m[0] * m[3] - m[2] * m[1];
-    };
+    }
 
     /**
       * @name invert
@@ -811,7 +844,7 @@
       out[3] = a[1] * b[2] + a[3] * b[3];
 
       return out;
-    };
+    }
 
     /**
       * @name scale
@@ -848,7 +881,7 @@
 	    out[3] =  a[0];
 
 	    return out;
-	  };
+	  }
 
   }
 
@@ -868,7 +901,7 @@
       * @name empty
       * @returns {mat3}
       * @function
-      * Creates an empty mat3
+      * Creates an empty mat3 (3x3)
     **/
     this.empty = function() {
       return new this._array(9);
@@ -917,7 +950,7 @@
       out[8] = 1;
 
 	    return out;
-	  };
+	  }
 
     /**
       * @name transpose
@@ -951,7 +984,7 @@
     **/
     this.determinant = function (m) {
 	    return m[0] * (m[8] * m[4] - m[5] * m[7]) + m[1] * (m[5] * m[6] - m[8] * m[3]) + m[2] * (m[7] * m[3] - m[4] * m[6]);
-	  };
+	  }
 
     /**
       * @name invert
@@ -979,7 +1012,7 @@
 	    out[8] = (m[4] * m[0] - m[1] * m[3]) * det;
 
 	    return out;
-	  };
+	  }
 
     /**
       * @name multiply
@@ -1003,7 +1036,7 @@
 	    out[8] = b[6] * a[2] + b[7] * a[5] + b[8] * a[8];
     
       return out;
-    };
+    }
 
     /**
       * @name scale
@@ -1047,10 +1080,100 @@
       * @name empty
       * @returns {mat4}
       * @function
-      * Creates an empty mat4
+      * Creates an empty mat4 (4x4)
     **/
     this.empty = function() {
       return new this._array(16);
+    }
+
+    /**
+      * @name clone
+      * @function
+      * Clones the given mat4
+      * @param {mat4} m the source matrix
+      * @returns {mat4}
+    **/
+    this.clone = function(m) {
+      let out = this.empty();
+
+      out[0] = m[0];
+      out[1] = m[1];
+      out[2] = m[2];
+      out[3] = m[3];
+      out[4] = m[4];
+      out[5] = m[5];
+      out[6] = m[6];
+      out[7] = m[7];
+      out[8] = m[8];
+      out[9] = m[9];
+      out[10] = m[10];
+      out[11] = m[11];
+      out[12] = m[12];
+      out[13] = m[13];
+      out[14] = m[14];
+      out[15] = m[15];
+
+      return out;
+    }
+
+    /**
+      * @name identity
+      * @function
+      * Creates an identity mat4
+      * @returns {mat4}
+    **/
+    this.identity = function() {
+      let out = this.empty();
+
+      out[0] = 1;
+      out[1] = 0;
+      out[2] = 0;
+      out[3] = 0;
+      out[4] = 0;
+      out[5] = 1;
+      out[6] = 0;
+      out[7] = 0;
+      out[8] = 0;
+      out[9] = 0;
+      out[10] = 1;
+      out[11] = 0;
+      out[12] = 0;
+      out[13] = 0;
+      out[14] = 0;
+      out[15] = 1;
+
+	    return out;
+	  }
+
+    /**
+      * @name scale
+      * @function
+      * Scales the mat4 by the dimensions in the given vec4
+      * @param {mat4} a the mat4 to scale
+      * @param {vec4} v the vec4 to scale the matrix by
+      * @returns {mat4} mat4
+    **/
+    this.scale = function(a, v) {
+      let out = this.empty();
+
+      out[0] = a[0] * v[0];
+      out[1] = a[1] * v[0];
+      out[2] = a[2] * v[0];
+      out[3] = a[3] * v[0];
+      out[4] = a[4] * v[1];
+      out[5] = a[5] * v[1];
+      out[6] = a[6] * v[1];
+      out[7] = a[7] * v[1];
+      out[8] = a[8] * v[2];
+      out[9] = a[9] * v[2];
+      out[10] = a[10] * v[2];
+      out[11] = a[11] * v[2];
+      out[12] = a[12] * v[3];
+      out[13] = a[13] * v[3];
+      out[14] = a[14] * v[3];
+      out[15] = a[15] * v[3];
+
+      return out;
     }
 
   }
@@ -1431,7 +1554,7 @@
 
     subscribe : function(update, error) {
       let len = this._observers.length;
-      this._observers.push(new observer(len, update, error));
+      this._observers.push(new Observer(len, update, error));
       return this._observers[len];
     },
 
@@ -1670,19 +1793,16 @@
       delete this;
     },
 
-    put : function(cookieName, cookieValue, cookieDurationDays = 7, type = 'day') {
+    put : function(cookieName, cookieValue, cookieDurationDays = 7) {
       if (typeof cookieName != 'string') { cookieName = 'noname' }
       if (typeof cookieDurationDays != 'number') { cookieDurationDays = 7; }
 
-      let d = 24;
-      let h = 60;
-
-      if (type == 'hour') { d = 1; }
-      if (type == 'minute') { d = 1; h = 1; }
+      let data = safeUriHandler.encode(JSON.stringify(cookieValue));
 
       let date = new Date();
-      date.setTime(date.getTime() + (cookieDurationDays * d * h * 60 * 1000));
-      document.cookie = cookieName + '=' + JSON.stringify(cookieValue) + ';' + 'expires=' + date.toUTCString() + ';path=/';
+      date.setTime(date.getTime() + (cookieDurationDays * 1 * 1 * 60 * 1000));
+
+      document.cookie = cookieName + '=' + data + ';' + 'expires=' + date.toUTCString() + ';path=/';
     },
 
     get : function(cookieName) {
@@ -1692,9 +1812,9 @@
       for (let i = 0; i < decodedCookie.length; i++) {
         let cookie = decodedCookie[i];
 
-        while (cookie.charAt(0) == ' ') { cookie = cookie.substring(1); }
+        while (cookie.charAt(0) == ' ') cookie = cookie.substring(1);
 
-        if (cookie.indexOf(cookieName) == 0) { return JSON.parse(cookie.substring(cookieName.length, cookie.length)); }
+        if (cookie.indexOf(cookieName) == 0) return JSON.parse(safeUriHandler.decode(cookie.substring(cookieName.length, cookie.length)));
       }
 
       return undefined;
@@ -1706,7 +1826,7 @@
       document.cookie = cookieName + '=' + '' + ';' + 'expires=' + date.toUTCString() + ';path=/';
     },
 
-    putObj : function(obj, cookieDurationDays = 7, type = 'day') {
+    putObj : function(obj, cookieDurationDays = 7) {
       if (typeof(obj) !== 'object') { return false; }
 
       for (let item in obj) this.put(item, obj[item], cookieDurationDays, type);
@@ -1987,26 +2107,26 @@
 
     _onStart : null,
     onStart : function(onCall, onError) {
-      if (typeof onCall == 'function') { this._onStart.subscribe(onCall, onError); }
+      if (typeof onCall == 'function') { return this._onStart.subscribe(onCall, onError); }
     },
     onStartComplete : function(onCall, onError) {
-      if (typeof onCall == 'function') { this._onStart.onComplete(onCall, onError) }
+      if (typeof onCall == 'function') { return this._onStart.onComplete(onCall, onError) }
     },
 
     _onUpdate : null,
     onUpdate : function(onCall, onError) {
-      if (typeof onCall == 'function') { this._onUpdate.subscribe(onCall, onError); }
+      if (typeof onCall == 'function') { return this._onUpdate.subscribe(onCall, onError); }
     },
     oUpdateComplete : function(onCall, onError) {
-      if (typeof onCall == 'function') { this._onUpdate.onComplete(onCall, onError) }
+      if (typeof onCall == 'function') { return this._onUpdate.onComplete(onCall, onError) }
     },
 
     _onLateUpdate : null,
     onLateUpdate : function(onCall, onError) {
-      if (typeof onCall == 'function') { this._onLateUpdate.subscribe(onCall, onError); }
+      if (typeof onCall == 'function') { return this._onLateUpdate.subscribe(onCall, onError); }
     },
     onLateUpdateComplete : function(onCall, onError) {
-      if (typeof onCall == 'function') { this._onLateUpdate.onComplete(onCall, onError) }
+      if (typeof onCall == 'function') { return this._onLateUpdate.onComplete(onCall, onError) }
     },
 
     init : function() {
@@ -3028,7 +3148,6 @@
   return {
     verifyES6 : verifyES6,
     verifyES7 : verifyES7,
-    dpConst : dpConst,
     deserialize : deserialize,
     $ : $,
     each : each,
@@ -3039,6 +3158,7 @@
     minCap : minCap,
     degToRad : degToRad,
     radToDeg : radToDeg,
+    safeUriHandler : safeUriHandler,
     vec2 : vec2,
     vec3 : vec3,
     vec4 : vec4,
